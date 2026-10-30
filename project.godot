@@ -11,6 +11,7 @@ config_version=5
 [application]
 
 config/name="Platformer Game Pixel godot"
+run/main_scene="uid://bsrp0nmiuq5yg"
 config/features=PackedStringArray("4.7", "Mobile")
 config/icon="res://icon.svg"
 
