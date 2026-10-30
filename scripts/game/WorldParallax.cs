@@ -4,6 +4,15 @@ public partial class WorldParallax : ParallaxBackground
 {
     public override void _Ready()
     {
+        var sky = new ColorRect
+        {
+            Name = "Sky",
+            Color = new Color("83c9e8"),
+            MouseFilter = Control.MouseFilterEnum.Ignore
+        };
+        sky.SetAnchorsAndOffsetsPreset(Control.LayoutPreset.FullRect);
+        AddChild(sky);
+
         AddLayer("CloudLayer", "res://assets/sprites/environment/clouds.svg", 0.12f, 18f, 512, 96, 3);
         AddLayer("MountainLayer", "res://assets/sprites/environment/mountains.svg", 0.28f, 102f, 960, 180, 3);
         AddLayer("ForestLayer", "res://assets/sprites/environment/forest.svg", 0.52f, 106f, 960, 180, 3);
@@ -22,14 +31,13 @@ public partial class WorldParallax : ParallaxBackground
         var texture = GD.Load<Texture2D>(texturePath);
         for (var i = -1; i < copies; i++)
         {
-            var sprite = new Sprite2D
+            layer.AddChild(new Sprite2D
             {
                 Texture = texture,
                 Centered = false,
                 Position = new Vector2(i * width, y),
                 TextureFilter = CanvasItem.TextureFilterEnum.Nearest
-            };
-            layer.AddChild(sprite);
+            });
         }
     }
 }
