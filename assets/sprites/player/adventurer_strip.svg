@@ -1,0 +1,15 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="128" height="32" viewBox="0 0 128 32" shape-rendering="crispEdges">
+<!-- Original four-frame adventurer sprite strip: idle, run A, run B, jump -->
+<g transform="translate(0 0)">
+<rect x="12" y="4" width="8" height="5" fill="#34233d"/><rect x="10" y="8" width="12" height="10" fill="#f2bd86"/><rect x="19" y="11" width="2" height="2" fill="#29243a"/><rect x="9" y="17" width="14" height="3" fill="#f4a340"/><rect x="8" y="20" width="16" height="8" fill="#3d78bd"/><rect x="6" y="21" width="3" height="6" fill="#3d78bd"/><rect x="23" y="21" width="3" height="6" fill="#3d78bd"/><rect x="9" y="28" width="14" height="2" fill="#5b3b2c"/><rect x="10" y="30" width="5" height="2" fill="#34233d"/><rect x="18" y="30" width="5" height="2" fill="#34233d"/>
+</g>
+<g transform="translate(32 0)">
+<rect x="12" y="4" width="8" height="5" fill="#34233d"/><rect x="10" y="8" width="12" height="10" fill="#f2bd86"/><rect x="19" y="11" width="2" height="2" fill="#29243a"/><rect x="9" y="17" width="14" height="3" fill="#f4a340"/><rect x="8" y="20" width="16" height="8" fill="#3d78bd"/><rect x="6" y="21" width="3" height="6" fill="#3d78bd"/><rect x="23" y="21" width="3" height="6" fill="#3d78bd"/><rect x="7" y="28" width="7" height="2" fill="#5b3b2c"/><rect x="6" y="30" width="6" height="2" fill="#34233d"/><rect x="19" y="28" width="6" height="2" fill="#5b3b2c"/><rect x="21" y="30" width="6" height="2" fill="#34233d"/>
+</g>
+<g transform="translate(64 0)">
+<rect x="12" y="4" width="8" height="5" fill="#34233d"/><rect x="10" y="8" width="12" height="10" fill="#f2bd86"/><rect x="19" y="11" width="2" height="2" fill="#29243a"/><rect x="9" y="17" width="14" height="3" fill="#f4a340"/><rect x="8" y="20" width="16" height="8" fill="#3d78bd"/><rect x="6" y="21" width="3" height="6" fill="#3d78bd"/><rect x="23" y="21" width="3" height="6" fill="#3d78bd"/><rect x="9" y="28" width="6" height="2" fill="#5b3b2c"/><rect x="10" y="30" width="6" height="2" fill="#34233d"/><rect x="18" y="28" width="7" height="2" fill="#5b3b2c"/><rect x="17" y="30" width="6" height="2" fill="#34233d"/>
+</g>
+<g transform="translate(96 0)">
+<rect x="12" y="2" width="8" height="5" fill="#34233d"/><rect x="10" y="6" width="12" height="10" fill="#f2bd86"/><rect x="19" y="9" width="2" height="2" fill="#29243a"/><rect x="9" y="15" width="14" height="3" fill="#f4a340"/><rect x="8" y="18" width="16" height="8" fill="#3d78bd"/><rect x="6" y="19" width="3" height="6" fill="#3d78bd"/><rect x="23" y="19" width="3" height="6" fill="#3d78bd"/><rect x="5" y="26" width="7" height="2" fill="#5b3b2c"/><rect x="4" y="28" width="6" height="2" fill="#34233d"/><rect x="20" y="26" width="7" height="2" fill="#5b3b2c"/><rect x="22" y="28" width="6" height="2" fill="#34233d"/>
+</g>
+</svg>
