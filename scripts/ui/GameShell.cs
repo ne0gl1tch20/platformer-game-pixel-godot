@@ -24,6 +24,7 @@ public partial class GameShell : CanvasLayer
     private bool _fullscreen;
     private bool _reducedMotion;
     private string _currentPage = "main";
+    public bool IsMenuOpen { get; private set; } = true;
 
     public override void _Ready()
     {
@@ -68,7 +69,7 @@ public partial class GameShell : CanvasLayer
         AddSlider("MASTER VOLUME", _masterVolume, value => { _masterVolume = value; ApplyAudio(); SaveSettings(); });
         AddSlider("MUSIC VOLUME", _musicVolume, value => { _musicVolume = value; ApplyAudio(); SaveSettings(); });
         AddSlider("SFX VOLUME", _sfxVolume, value => { _sfxVolume = value; ApplyAudio(); SaveSettings(); });
-        AddToggle("SHOW TOUCH CONTROLS", _showTouch, value => { _showTouch = value; SaveSettings(); });
+        AddToggle("SHOW TOUCH CONTROLS", _showTouch, value => { _showTouch = value; SetTouchVisible(value); SaveSettings(); });
         AddToggle("FULLSCREEN", _fullscreen, value => { _fullscreen = value; ApplyDisplay(); SaveSettings(); });
         AddToggle("REDUCED MOTION", _reducedMotion, value => { _reducedMotion = value; SaveSettings(); });
         AddActionButton("BACK", () => { if (_returnPage == "pause") ShowPauseMenu(); else ShowMainMenu(); });
@@ -112,8 +113,8 @@ public partial class GameShell : CanvasLayer
 
     public override void _UnhandledInput(InputEvent @event)
     {
-        if (!@event.IsActionPressed("ui_cancel") || @event.IsEcho()) return;
-        if (!Visible)
+        if (!@event.IsActionPressed("ui_cancel")) return;
+        if (!IsMenuOpen)
         {
             PauseRequested?.Invoke();
             GetViewport().SetInputAsHandled();
@@ -141,12 +142,16 @@ public partial class GameShell : CanvasLayer
 
     public void HideShell()
     {
-        Visible = false;
+        foreach (var child in _root.GetChildren())
+        {
+            if (child.Name.ToString() != "TouchControls") child.QueueFree();
+        }
+        IsMenuOpen = false;
     }
 
     public void ShowShell()
     {
-        Visible = true;
+        ShowMainMenu();
     }
 
 
@@ -210,6 +215,8 @@ public partial class GameShell : CanvasLayer
         jump.Pressed += () => JumpRequested?.Invoke();
         var attack = MakeTouchButton(controls, "ATK", new Vector2(1, 1), new Vector2(-202, -74), new Vector2(-128, -24), new Vector2(74, 50));
         attack.Pressed += () => AttackRequested?.Invoke();
+        var pause = MakeTouchButton(controls, "Ⅱ", new Vector2(1, 0), new Vector2(-58, 12), new Vector2(-14, 50), new Vector2(44, 38));
+        pause.Pressed += () => PauseRequested?.Invoke();
     }
 
     private static Button MakeTouchButton(Control parent, string label, Vector2 anchors, Vector2 topLeft, Vector2 bottomRight, Vector2 size)
@@ -260,7 +267,8 @@ public partial class GameShell : CanvasLayer
         panel.AddThemeStyleboxOverride("panel", MakePanelStyle());
         _root.AddChild(panel);
 
-        var scroll = new ScrollContainer { HorizontalScrollMode = ScrollContainer.ScrollMode.Disabled };
+        IsMenuOpen = true;
+        var scroll = new ScrollContainer { HorizontalScrollMode = ScrollContainer.ScrollModeEnum.Disabled };
         scroll.SetAnchorsAndOffsetsPreset(Control.LayoutPreset.FullRect);
         panel.AddChild(scroll);
         _content = new VBoxContainer { SizeFlagsHorizontal = Control.SizeFlags.ExpandFill, Alignment = BoxContainer.AlignmentMode.Center };
