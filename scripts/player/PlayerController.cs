@@ -21,6 +21,8 @@ public partial class PlayerController : CharacterBody2D
     private int _health;
     private Vector2 _spawnPoint;
     private bool _dead;
+    private AnimatedSprite2D _sprite;
+    private string _currentAnimation = "";
 
     public int Health => _health;
     public int MaxHealthValue => MaxHealth;
@@ -31,6 +33,8 @@ public partial class PlayerController : CharacterBody2D
         var collision = new CollisionShape2D { Position = new Vector2(0, -12) };
         collision.Shape = new RectangleShape2D { Size = new Vector2(12, 24) };
         AddChild(collision);
+        _sprite = CreateAnimatedSprite();
+        AddChild(_sprite);
         _health = MaxHealth;
         _spawnPoint = SaveSystem.Instance?.GetCheckpoint() ?? GlobalPosition;
         GD.Print("[Player] Adventurer online at ", GlobalPosition);
@@ -74,6 +78,7 @@ public partial class PlayerController : CharacterBody2D
         _attackTimer = Mathf.Max(0f, _attackTimer - dt);
         _invulnerabilityTimer = Mathf.Max(0f, _invulnerabilityTimer - dt);
         MoveAndSlide();
+        UpdateAnimation();
         if (GlobalPosition.Y > 520f) Die();
         QueueRedraw();
     }
@@ -123,21 +128,66 @@ public partial class PlayerController : CharacterBody2D
         QueueRedraw();
     }
 
+    private AnimatedSprite2D CreateAnimatedSprite()
+    {
+        var texture = GD.Load<Texture2D>("res://assets/sprites/player/adventurer_strip.svg");
+        var frames = new SpriteFrames();
+        frames.AddAnimation("idle");
+        frames.SetAnimationSpeed("idle", 1f);
+        frames.AddAnimation("run");
+        frames.SetAnimationSpeed("run", 9f);
+        frames.AddAnimation("jump");
+        frames.SetAnimationSpeed("jump", 1f);
+
+        AddAtlasFrame(frames, "idle", texture, 0);
+        AddAtlasFrame(frames, "run", texture, 1);
+        AddAtlasFrame(frames, "run", texture, 2);
+        AddAtlasFrame(frames, "jump", texture, 3);
+
+        var animated = new AnimatedSprite2D
+        {
+            Name = "AnimatedSprite",
+            SpriteFrames = frames,
+            Position = new Vector2(0, -16),
+            TextureFilter = CanvasItem.TextureFilterEnum.Nearest
+        };
+        animated.Play("idle");
+        return animated;
+    }
+
+    private static void AddAtlasFrame(SpriteFrames frames, string animation, Texture2D texture, int index)
+    {
+        var atlas = new AtlasTexture
+        {
+            Atlas = texture,
+            Region = new Rect2(index * 32, 0, 32, 32),
+            FilterClip = true
+        };
+        frames.AddFrame(animation, atlas);
+    }
+
+    private void UpdateAnimation()
+    {
+        if (_sprite == null) return;
+        var next = !IsOnFloor() ? "jump" : Mathf.Abs(Velocity.X) > 12f ? "run" : "idle";
+        if (next != _currentAnimation)
+        {
+            _currentAnimation = next;
+            _sprite.Play(next);
+        }
+        _sprite.FlipH = _facing < 0f;
+        _sprite.Modulate = _invulnerabilityTimer > 0f
+            ? new Color(1f, 0.72f, 0.72f)
+            : Colors.White;
+        _sprite.Scale = _attackTimer > 0f ? new Vector2(1.12f, 0.92f) : Vector2.One;
+    }
+
     public override void _Draw()
     {
-        if (_invulnerabilityTimer > 0f && Mathf.FloorToInt(_invulnerabilityTimer * 14f) % 2 == 0) return;
-        DrawSetTransform(Vector2.Zero, 0f, new Vector2(_facing, 1f));
-        DrawRect(new Rect2(-7, -27, 14, 8), new Color("34233d"));
-        DrawRect(new Rect2(-8, -23, 4, 6), new Color("34233d"));
-        DrawRect(new Rect2(-5, -20, 10, 9), new Color("f2bd86"));
-        DrawRect(new Rect2(2, -17, 2, 2), new Color("29243a"));
-        DrawRect(new Rect2(-6, -12, 12, 3), new Color("f4a340"));
-        DrawRect(new Rect2(-7, -10, 14, 8), new Color("3d78bd"));
-        DrawRect(new Rect2(-9, -9, 3, 7), new Color("3d78bd"));
-        DrawRect(new Rect2(6, -9, 3, 7), new Color("3d78bd"));
-        DrawRect(new Rect2(-7, -3, 14, 3), new Color("5b3b2c"));
-        DrawRect(new Rect2(-6, 0, 5, 3), new Color("34233d"));
-        DrawRect(new Rect2(2, 0, 5, 3), new Color("34233d"));
-        if (_attackTimer > 0f) DrawRect(new Rect2(12, -13, 13, 3), new Color("f8e6a0"));
+        if (_attackTimer > 0f)
+        {
+            DrawRect(new Rect2(_facing > 0 ? 12 : -25, -13, 13, 3), new Color("f8e6a0"));
+            DrawRect(new Rect2(_facing > 0 ? 16 : -25, -16, 7, 2), new Color("fff4c2"));
+        }
     }
 }
