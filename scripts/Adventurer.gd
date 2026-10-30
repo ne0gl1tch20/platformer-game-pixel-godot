@@ -11,6 +11,11 @@ func _ready() -> void:
 
 func _physics_process(delta: float) -> void:
 	var direction := Input.get_axis("ui_left", "ui_right")
+	if Input.is_key_pressed(KEY_A):
+		direction -= 1.0
+	if Input.is_key_pressed(KEY_D):
+		direction += 1.0
+	direction = clampf(direction, -1.0, 1.0)
 	if direction != 0.0:
 		facing = signf(direction)
 		velocity.x = direction * move_speed
