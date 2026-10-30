@@ -35,17 +35,6 @@ public partial class Game : Node2D
         _score.Text = $"CRYSTALS {coins}   BEST {SaveSystem.Instance?.BestScore ?? 0}";
     }
 
-    public override void _UnhandledInput(InputEvent @event)
-    {
-        if (!_gameStarted || _shell == null || _shell.Visible) return;
-        if (@event.IsActionPressed("ui_cancel") && !@event.IsEcho())
-        {
-            GetTree().Paused = true;
-            _shell.ShowPauseMenu();
-            GetViewport().SetInputAsHandled();
-        }
-    }
-
     private static void ConfigureInput()
     {
         AddKeyAction("move_left", Key.A, Key.Left);
