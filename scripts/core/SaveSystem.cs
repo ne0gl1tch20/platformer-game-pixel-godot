@@ -59,7 +59,13 @@ public partial class SaveSystem : Node
         if (slot < 1 || slot > SlotCount) return;
         var path = $"user://save_slot_{slot}.json";
         if (FileAccess.FileExists(path)) DirAccess.RemoveAbsolute(ProjectSettings.GlobalizePath(path));
-        if (slot == _currentSlot) NewGame();
+        if (slot == _currentSlot)
+        {
+            BestScore = 0;
+            Coins = 0;
+            CheckpointX = 64;
+            CheckpointY = 220;
+        }
     }
 
     public void NewGame()
