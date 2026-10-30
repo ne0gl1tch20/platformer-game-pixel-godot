@@ -21,13 +21,6 @@ public partial class Enemy : CharacterBody2D
             TextureFilter = CanvasItem.TextureFilterEnum.Nearest
         };
         AddChild(_sprite);
-        _sprite = new Sprite2D
-        {
-            Texture = GD.Load<Texture2D>("res://assets/sprites/enemies/walker.svg"),
-            Position = new Vector2(0, -10),
-            TextureFilter = CanvasItem.TextureFilterEnum.Nearest
-        };
-        AddChild(_sprite);
         var collision = new CollisionShape2D { Position = new Vector2(0, -7) };
         collision.Shape = new RectangleShape2D { Size = new Vector2(18, 14) };
         AddChild(collision);
