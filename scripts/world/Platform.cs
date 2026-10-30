@@ -4,9 +4,17 @@ public partial class Platform : StaticBody2D
 {
     [Export] public Vector2 Size { get; set; } = new(80, 12);
     [Export] public Color PlatformColor { get; set; } = new("9b7048");
+    private AtlasTexture _tileTexture;
 
     public override void _Ready()
     {
+        _tileTexture = new AtlasTexture
+        {
+            Atlas = GD.Load<Texture2D>("res://assets/tilesets/overworld_tiles.svg"),
+            Region = new Rect2(0, 0, 32, 32),
+            FilterClip = true
+        };
+
         var collision = new CollisionShape2D();
         collision.Shape = new RectangleShape2D { Size = Size };
         AddChild(collision);
@@ -45,14 +53,11 @@ public partial class Platform : StaticBody2D
     public override void _Draw()
     {
         var top = -Size.Y / 2f;
-        DrawRect(new Rect2(-Size.X / 2f, top, Size.X, Size.Y), PlatformColor);
-        DrawRect(new Rect2(-Size.X / 2f, top + 3f, Size.X, 2f), new Color("80523a"));
-        for (var x = 0f; x < Size.X; x += 16f)
+        var tileWidth = 32f;
+        for (var x = 0f; x < Size.X; x += tileWidth)
         {
-            var px = -Size.X / 2f + x;
-            DrawRect(new Rect2(px + 3f, top + 8f, 4f, 2f), new Color("704632"));
-            DrawRect(new Rect2(px + 10f, top + 13f, 3f, 2f), new Color("ad7650"));
-            DrawRect(new Rect2(px + 1f, top, 7f, 2f), new Color("b7e47d"));
+            var width = Mathf.Min(tileWidth, Size.X - x);
+            DrawTextureRect(_tileTexture, new Rect2(-Size.X / 2f + x, top, width, Size.Y), false);
         }
     }
 }
