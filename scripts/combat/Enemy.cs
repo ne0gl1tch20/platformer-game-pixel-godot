@@ -10,7 +10,6 @@ public partial class Enemy : CharacterBody2D
     private float _direction = 1f;
     private bool _dying;
     private Sprite2D _sprite;
-    private Sprite2D _sprite;
 
     public override void _Ready()
     {
@@ -35,13 +34,6 @@ public partial class Enemy : CharacterBody2D
         _left = GlobalPosition.X - PatrolDistance;
         _right = GlobalPosition.X + PatrolDistance;
         QueueRedraw();
-    }
-
-    public override void _Process(double delta)
-    {
-        if (_sprite == null) return;
-        _sprite.FlipH = _direction < 0f;
-        _sprite.Position = new Vector2(0, -10 + Mathf.Sin((float)Time.GetTicksMsec() * 0.008f) * 1.5f);
     }
 
     public override void _Process(double delta)
