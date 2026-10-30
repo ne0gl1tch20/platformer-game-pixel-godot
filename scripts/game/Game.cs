@@ -5,7 +5,8 @@ public partial class Game : Node2D
     private PlayerController _player;
     private Label _status;
     private Label _score;
-    private Control _touchUi;
+    private GameShell _shell;
+    private bool _gameStarted;
 
     private readonly PackedScene _playerScene = GD.Load<PackedScene>("res://scenes/player/Player.tscn");
     private readonly PackedScene _platformScene = GD.Load<PackedScene>("res://scenes/world/Platform.tscn");
@@ -14,23 +15,36 @@ public partial class Game : Node2D
 
     public override void _Ready()
     {
+        ProcessMode = ProcessModeEnum.Always;
         ConfigureInput();
         GD.Print("[Game] Booting production game...");
         BuildWorld();
         SpawnPlayer();
         BuildHud();
-        BuildTouchControls();
         StartDspSoundtrack();
+        BuildGameShell();
         (GetNodeOrNull<AndroidBridge>("/root/AndroidBridge"))?.LogBridgeStatus();
-        GD.Print("[Game] Production systems online.");
+        GetTree().Paused = true;
+        GD.Print("[Game] Game shell ready. Waiting at main menu.");
     }
 
     public override void _Process(double delta)
     {
-        if (_player == null) return;
+        if (_player == null || _status == null || _score == null) return;
         _status.Text = $"HP {new string('♥', _player.Health)}{new string('♡', _player.MaxHealthValue - _player.Health)}   |   MOVE   JUMP   ATTACK";
         var coins = SaveSystem.Instance?.Coins ?? 0;
         _score.Text = $"CRYSTALS {coins}   BEST {SaveSystem.Instance?.BestScore ?? 0}";
+    }
+
+    public override void _UnhandledInput(InputEvent @event)
+    {
+        if (!_gameStarted || _shell == null || _shell.Visible) return;
+        if (@event.IsActionPressed("ui_cancel") && !@event.IsEcho())
+        {
+            GetTree().Paused = true;
+            _shell.ShowPauseMenu();
+            GetViewport().SetInputAsHandled();
+        }
     }
 
     private static void ConfigureInput()
@@ -156,30 +170,46 @@ public partial class Game : Node2D
         layer.AddChild(_score);
     }
 
-    private void BuildTouchControls()
+    private void BuildGameShell()
     {
-        if (!OS.HasFeature("mobile")) return;
-        _touchUi = new Control { Name = "TouchControls" };
-        _touchUi.SetAnchorsAndOffsetsPreset(Control.LayoutPreset.FullRect);
-        GetTree().Root.AddChild(_touchUi);
-        var left = MakeButton("◀", new Vector2(24, 190));
-        var right = MakeButton("▶", new Vector2(92, 190));
-        var jump = MakeButton("JUMP", new Vector2(360, 176), new Vector2(96, 50));
-        var attack = MakeButton("ATK", new Vector2(292, 210), new Vector2(58, 42));
-        left.ButtonDown += () => _player?.SetTouchDirection(-1f);
-        left.ButtonUp += () => _player?.SetTouchDirection(0f);
-        right.ButtonDown += () => _player?.SetTouchDirection(1f);
-        right.ButtonUp += () => _player?.SetTouchDirection(0f);
-        jump.Pressed += () => _player?.PressTouchJump();
-        attack.Pressed += () => _player?.PerformTouchAttack();
+        _shell = new GameShell { Name = "GameShell" };
+        AddChild(_shell);
+        _shell.PlayRequested += StartGame;
+        _shell.ResumeRequested += ResumeGame;
+        _shell.NewGameRequested += StartNewGame;
+        _shell.ReturnToMenuRequested += ReturnToMenu;
+        _shell.JoystickMoved += direction => _player?.SetTouchDirection(direction.X);
+        _shell.JumpRequested += () => _player?.PressTouchJump();
+        _shell.AttackRequested += () => _player?.PerformTouchAttack();
     }
 
-    private Button MakeButton(string text, Vector2 position, Vector2 size = default)
+    private void StartGame()
     {
-        if (size == default) size = new Vector2(58, 50);
-        var button = new Button { Text = text, Position = position, Size = size };
-        button.AddThemeFontSizeOverride("font_size", 14);
-        _touchUi.AddChild(button);
-        return button;
+        _gameStarted = true;
+        GetTree().Paused = false;
+    }
+
+    private void ResumeGame()
+    {
+        _gameStarted = true;
+        GetTree().Paused = false;
+    }
+
+    private void StartNewGame()
+    {
+        SaveSystem.Instance?.NewGame();
+        if (_player != null)
+        {
+            _player.GlobalPosition = new Vector2(64, 220);
+            _player.ResetForNewGame();
+        }
+        _gameStarted = true;
+        GetTree().Paused = false;
+    }
+
+    private void ReturnToMenu()
+    {
+        _gameStarted = false;
+        GetTree().Paused = true;
     }
 }
