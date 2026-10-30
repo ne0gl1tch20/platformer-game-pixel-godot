@@ -20,6 +20,7 @@ public partial class Game : Node2D
         SpawnPlayer();
         BuildHud();
         BuildTouchControls();
+        StartDspSoundtrack();
         (GetNodeOrNull<AndroidBridge>("/root/AndroidBridge"))?.LogBridgeStatus();
         GD.Print("[Game] Production systems online.");
     }
@@ -79,6 +80,11 @@ public partial class Game : Node2D
     {
         var backdrop = new Backdrop { ZIndex = -10 };
         AddChild(backdrop);
+        AddChild(new WorldParallax { Name = "WorldParallax" });
+        AddTree(new Vector2(95, 171), 0.9f);
+        AddTree(new Vector2(520, 92), 0.72f);
+        AddTree(new Vector2(1010, 159), 1.05f);
+        AddTree(new Vector2(1470, 168), 0.88f);
     }
 
     private void SpawnPlayer()
@@ -116,6 +122,25 @@ public partial class Game : Node2D
         var crystal = _collectibleScene.Instantiate<Collectible>();
         crystal.Position = position;
         AddChild(crystal);
+    }
+
+    private void AddTree(Vector2 position, float scale)
+    {
+        var tree = new Sprite2D
+        {
+            Texture = GD.Load<Texture2D>("res://assets/sprites/environment/tree.svg"),
+            Position = position,
+            Scale = Vector2.One * scale,
+            ZIndex = -1,
+            TextureFilter = CanvasItem.TextureFilterEnum.Nearest
+        };
+        AddChild(tree);
+    }
+
+    private void StartDspSoundtrack()
+    {
+        var music = new DspSoundtrack { Name = "LoveglowDSP" };
+        AddChild(music);
     }
 
     private void BuildHud()
