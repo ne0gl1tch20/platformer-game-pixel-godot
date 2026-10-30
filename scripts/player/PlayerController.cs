@@ -72,6 +72,7 @@ public partial class PlayerController : CharacterBody2D
             Velocity = new Vector2(Velocity.X, JumpVelocity);
             _jumpBufferTimer = 0f;
             _coyoteTimer = 0f;
+            DspSoundtrack.Instance?.PlayJump();
         }
 
         if (Input.IsActionJustPressed("attack")) Attack();
@@ -101,6 +102,7 @@ public partial class PlayerController : CharacterBody2D
     {
         if (_attackTimer > 0f) return;
         _attackTimer = 0.28f;
+        DspSoundtrack.Instance?.PlayAttack();
         foreach (var node in GetTree().GetNodesInGroup("enemies"))
         {
             if (node is Enemy enemy && GlobalPosition.DistanceTo(enemy.GlobalPosition) < 44f && Mathf.Sign(enemy.GlobalPosition.X - GlobalPosition.X) == _facing)
