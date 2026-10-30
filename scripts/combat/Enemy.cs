@@ -9,16 +9,31 @@ public partial class Enemy : CharacterBody2D
     private float _right;
     private float _direction = 1f;
     private bool _dying;
+    private Sprite2D _sprite;
 
     public override void _Ready()
     {
         AddToGroup("enemies");
+        _sprite = new Sprite2D
+        {
+            Texture = GD.Load<Texture2D>("res://assets/sprites/enemies/walker.svg"),
+            Position = new Vector2(0, -10),
+            TextureFilter = CanvasItem.TextureFilterEnum.Nearest
+        };
+        AddChild(_sprite);
         var collision = new CollisionShape2D { Position = new Vector2(0, -7) };
         collision.Shape = new RectangleShape2D { Size = new Vector2(18, 14) };
         AddChild(collision);
         _left = GlobalPosition.X - PatrolDistance;
         _right = GlobalPosition.X + PatrolDistance;
         QueueRedraw();
+    }
+
+    public override void _Process(double delta)
+    {
+        if (_sprite == null) return;
+        _sprite.FlipH = _direction < 0f;
+        _sprite.Position = new Vector2(0, -10 + Mathf.Sin((float)Time.GetTicksMsec() * 0.008f) * 1.5f);
     }
 
     public override void _PhysicsProcess(double delta)
@@ -45,13 +60,4 @@ public partial class Enemy : CharacterBody2D
         QueueRedraw();
     }
 
-    public override void _Draw()
-    {
-        DrawRect(new Rect2(-10, -14, 20, 14), new Color("713b53"));
-        DrawRect(new Rect2(-7, -19, 14, 7), new Color("8f5368"));
-        DrawRect(new Rect2(-5, -16, 3, 3), new Color("f8e6a0"));
-        DrawRect(new Rect2(2, -16, 3, 3), new Color("f8e6a0"));
-        DrawRect(new Rect2(-9, 0, 7, 3), new Color("3b3048"));
-        DrawRect(new Rect2(2, 0, 7, 3), new Color("3b3048"));
-    }
 }
