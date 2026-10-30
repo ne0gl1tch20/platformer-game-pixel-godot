@@ -170,6 +170,7 @@ public partial class Game : Node2D
         _shell.JoystickMoved += direction => _player?.SetTouchDirection(direction.X);
         _shell.JumpRequested += () => _player?.PressTouchJump();
         _shell.AttackRequested += () => _player?.PerformTouchAttack();
+        _shell.SaveSlotChanged += () => { if (_player != null) { _player.GlobalPosition = SaveSystem.Instance?.GetCheckpoint() ?? new Vector2(64, 220); _player.ResetForNewGame(); } };
     }
 
     private void PauseGame()
