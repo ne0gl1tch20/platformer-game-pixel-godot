@@ -33,6 +33,7 @@ public partial class Collectible : Area2D
     {
         if (body is not PlayerController) return;
         SaveSystem.Instance?.AddCoins(Value);
+        DspSoundtrack.Instance?.PlayCollect();
         AndroidBridge.Instance?.Vibrate(18);
         QueueFree();
     }
