@@ -78,8 +78,6 @@ public partial class Game : Node2D
 
     private void _createBackdrop()
     {
-        var backdrop = new Backdrop { ZIndex = -10 };
-        AddChild(backdrop);
         AddChild(new WorldParallax { Name = "WorldParallax" });
         AddTree(new Vector2(95, 171), 0.9f);
         AddTree(new Vector2(520, 92), 0.72f);
@@ -130,6 +128,7 @@ public partial class Game : Node2D
         {
             Texture = GD.Load<Texture2D>("res://assets/sprites/environment/tree.svg"),
             Position = position,
+            Centered = false,
             Scale = Vector2.One * scale,
             ZIndex = -1,
             TextureFilter = CanvasItem.TextureFilterEnum.Nearest
