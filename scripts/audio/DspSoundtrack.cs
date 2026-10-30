@@ -5,10 +5,15 @@ public partial class DspSoundtrack : Node
 {
     private const int SampleRate = 22050;
     private const int DurationSeconds = 16;
+    public static DspSoundtrack Instance { get; private set; }
     private AudioStreamPlayer _player;
+    private AudioStreamPlayer _jumpPlayer;
+    private AudioStreamPlayer _attackPlayer;
+    private AudioStreamPlayer _collectPlayer;
 
     public override void _Ready()
     {
+        Instance = this;
         _player = new AudioStreamPlayer
         {
             Name = "LoveglowPlayer",
@@ -17,8 +22,56 @@ public partial class DspSoundtrack : Node
             Autoplay = false
         };
         AddChild(_player);
+        _jumpPlayer = AddEffectPlayer("JumpSfx", BuildEffect(320, 610, 0.18, 0.12, false));
+        _attackPlayer = AddEffectPlayer("AttackSfx", BuildEffect(560, 145, 0.16, 0.10, false));
+        _collectPlayer = AddEffectPlayer("CollectSfx", BuildEffect(760, 1320, 0.24, 0.13, true));
         _player.Play();
         GD.Print("[DSP Audio] Loveglow ambient loop started (synthesized PCM, no audio files).");
+    }
+
+    public void PlayJump() => _jumpPlayer?.Play();
+    public void PlayAttack() => _attackPlayer?.Play();
+    public void PlayCollect() => _collectPlayer?.Play();
+
+    private AudioStreamPlayer AddEffectPlayer(string playerName, AudioStreamWav stream)
+    {
+        var player = new AudioStreamPlayer
+        {
+            Name = playerName,
+            Stream = stream,
+            VolumeDb = -2f
+        };
+        AddChild(player);
+        return player;
+    }
+
+    private static AudioStreamWav BuildEffect(double startFrequency, double endFrequency, double duration, double volume, bool sparkle)
+    {
+        var frames = (int)(SampleRate * duration);
+        var pcm = new byte[frames * 2];
+        for (var i = 0; i < frames; i++)
+        {
+            var t = (double)i / SampleRate;
+            var progress = t / duration;
+            var frequency = startFrequency + (endFrequency - startFrequency) * progress;
+            var envelope = Math.Pow(1.0 - progress, sparkle ? 2.2 : 1.7);
+            var wave = Math.Sin(Math.PI * 2.0 * frequency * t);
+            if (sparkle)
+                wave = wave * 0.72 + Math.Sin(Math.PI * 4.0 * frequency * t) * 0.2 +
+                       Math.Sin(Math.PI * 6.0 * frequency * t) * 0.08;
+            else
+                wave = wave * 0.82 + Math.Sin(Math.PI * 4.0 * frequency * t) * 0.18;
+            var sample = (short)Math.Clamp((int)(Math.Tanh(wave * envelope) * volume * short.MaxValue), short.MinValue, short.MaxValue);
+            pcm[i * 2] = (byte)(sample & 0xff);
+            pcm[i * 2 + 1] = (byte)((sample >> 8) & 0xff);
+        }
+        return new AudioStreamWav
+        {
+            Data = pcm,
+            Format = AudioStreamWav.FormatEnum.Format16Bits,
+            MixRate = SampleRate,
+            Stereo = false
+        };
     }
 
     private static AudioStreamWav BuildLoveglowLoop()
