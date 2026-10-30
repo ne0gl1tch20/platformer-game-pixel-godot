@@ -72,7 +72,7 @@ public partial class GameShell : CanvasLayer
         AddSlider("SFX VOLUME", _sfxVolume, value => { _sfxVolume = value; ApplyAudio(); SaveSettings(); });
         AddToggle("SHOW TOUCH CONTROLS", _showTouch, value => { _showTouch = value; SetTouchVisible(value); SaveSettings(); });
         if (!OS.HasFeature("mobile")) AddToggle("FULLSCREEN", _fullscreen, value => { _fullscreen = value; ApplyDisplay(); SaveSettings(); });
-        AddToggle("REDUCED MOTION", _reducedMotion, value => { _reducedMotion = value; SaveSettings(); });
+        AddToggle("REDUCED MOTION", _reducedMotion, value => { _reducedMotion = value; ApplyAccessibility(); SaveSettings(); });
         AddActionButton("BACK", () => { if (_returnPage == "pause") ShowPauseMenu(); else ShowMainMenu(); });
         AddFooter();
     }
@@ -267,7 +267,7 @@ public partial class GameShell : CanvasLayer
         _root.AddChild(panel);
 
         IsMenuOpen = true;
-        var scroll = new ScrollContainer { HorizontalScrollMode = ScrollContainer.ScrollModeEnum.Disabled };
+        var scroll = new ScrollContainer { HorizontalScrollMode = ScrollContainer.ScrollModeEnum.Disabled, SizeFlagsHorizontal = Control.SizeFlags.ExpandFill, SizeFlagsVertical = Control.SizeFlags.ExpandFill };
         scroll.SetAnchorsAndOffsetsPreset(Control.LayoutPreset.FullRect);
         panel.AddChild(scroll);
         _content = new VBoxContainer { SizeFlagsHorizontal = Control.SizeFlags.ExpandFill, Alignment = BoxContainer.AlignmentMode.Center };
@@ -289,7 +289,7 @@ public partial class GameShell : CanvasLayer
 
     private void AddActionButton(string label, Action action)
     {
-        var buttonWidth = Mathf.Max(150f, Mathf.Min(230f, _root.Size.X - 76f));
+        var buttonWidth = Mathf.Max(150f, Mathf.Min(230f, GetViewport().GetVisibleRect().Size.X - 76f));
         var button = new Button { Text = label, CustomMinimumSize = new Vector2(buttonWidth, 36), SizeFlagsHorizontal = Control.SizeFlags.ShrinkCenter, FocusMode = Control.FocusModeEnum.None };
         button.AddThemeFontSizeOverride("font_size", 14);
         button.Pressed += action;
@@ -376,6 +376,12 @@ public partial class GameShell : CanvasLayer
         _reducedMotion = (bool)config.GetValue("accessibility", "reduced_motion", false);
         ApplyAudio();
         ApplyDisplay();
+        ApplyAccessibility();
+    }
+
+    private void ApplyAccessibility()
+    {
+        GetParent()?.GetNodeOrNull<WorldParallax>("WorldParallax")?.SetReducedMotion(_reducedMotion);
     }
 
     private void SaveSettings()

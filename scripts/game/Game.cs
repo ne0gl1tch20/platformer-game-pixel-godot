@@ -41,6 +41,10 @@ public partial class Game : Node2D
         AddKeyAction("move_right", Key.D, Key.Right);
         AddKeyAction("jump", Key.Space, Key.W, Key.Up);
         AddKeyAction("attack", Key.F, Key.J);
+        AddJoyAxisAction("move_left", JoyAxis.LeftX, -1f);
+        AddJoyAxisAction("move_right", JoyAxis.LeftX, 1f);
+        AddJoyButtonAction("jump", JoyButton.A);
+        AddJoyButtonAction("attack", JoyButton.X);
     }
 
     private static void AddKeyAction(string action, params Key[] keys)
@@ -51,6 +55,18 @@ public partial class Game : Node2D
             var ev = new InputEventKey { PhysicalKeycode = key };
             if (!InputMap.ActionHasEvent(action, ev)) InputMap.ActionAddEvent(action, ev);
         }
+    }
+
+    private static void AddJoyAxisAction(string action, JoyAxis axis, float value)
+    {
+        var ev = new InputEventJoypadMotion { Axis = axis, AxisValue = value };
+        if (!InputMap.ActionHasEvent(action, ev)) InputMap.ActionAddEvent(action, ev);
+    }
+
+    private static void AddJoyButtonAction(string action, JoyButton button)
+    {
+        var ev = new InputEventJoypadButton { ButtonIndex = button };
+        if (!InputMap.ActionHasEvent(action, ev)) InputMap.ActionAddEvent(action, ev);
     }
 
     private void BuildWorld()
