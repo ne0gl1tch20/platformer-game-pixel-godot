@@ -2,6 +2,17 @@ using Godot;
 
 public partial class WorldParallax : ParallaxBackground
 {
+    public void SetReducedMotion(bool reduced)
+    {
+        foreach (var child in GetChildren())
+        {
+            if (child is not ParallaxLayer layer) continue;
+            var name = layer.Name.ToString();
+            var speed = name == "CloudLayer" ? 0.12f : name == "MountainLayer" ? 0.28f : 0.52f;
+            layer.MotionScale = reduced ? Vector2.Zero : new Vector2(speed, 1f);
+        }
+    }
+
     public override void _Ready()
     {
         var sky = new ColorRect

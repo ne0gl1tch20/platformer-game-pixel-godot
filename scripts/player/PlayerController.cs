@@ -85,6 +85,20 @@ public partial class PlayerController : CharacterBody2D
     }
 
     public void SetTouchDirection(float direction) => _touchDirection = Mathf.Clamp(direction, -1f, 1f);
+
+    public void ResetForNewGame()
+    {
+        _health = MaxHealth;
+        _dead = false;
+        _coyoteTimer = 0f;
+        _jumpBufferTimer = 0f;
+        _touchDirection = 0f;
+        _touchJump = false;
+        _attackTimer = 0f;
+        _invulnerabilityTimer = 0f;
+        Velocity = Vector2.Zero;
+        QueueRedraw();
+    }
     public void PressTouchJump() => _touchJump = true;
     public void PerformTouchAttack() => Attack();
 

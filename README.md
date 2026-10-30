@@ -1,50 +1,47 @@
 # Platformer Game Pixel
 
-Production-mode 2D pixel platformer built with **Godot 4.7 + C#/.NET**, with an Android Kotlin bridge and a cloud-first build pipeline.
+A cozy 2D pixel-art platformer built with **Godot 4.7 + C#/.NET**, with a Kotlin Android bridge and cloud APK builds.
 
-## Current foundation
+## Game shell
 
-1. **Production player controller** — acceleration, air control, coyote time, jump buffering, facing, attack and damage.
-2. **World/level structure** — reusable `Platform` scene, camera limits and a real level layout.
-3. **Pixel presentation** — crisp pixel-style procedural characters/backgrounds with nearest-neighbor filtering.
-4. **Enemies + combat** — patrol walkers with health and player attack range.
-5. **Collectibles + progression** — persistent crystal count and best score state.
-6. **Health/death/respawn** — health, invulnerability, fall death and checkpoint respawn.
-7. **Mobile controls** — touch movement, jump and attack controls on Android.
-8. **Save system** — versioned JSON save data in `user://save.json`.
-9. **Audio-ready architecture** — gameplay systems are separated so SFX/music can be added without rewriting gameplay.
-10. **HUD/settings-ready structure** — HUD is a separate CanvasLayer and Android-safe UI hooks are isolated.
-11. **Android build pipeline** — GitHub Actions builds a debug APK on merged `main` pushes and keeps the artifact for 7 days.
-12. **Kotlin integration** — `PlatformerBridge` is a Godot Android plugin written in Kotlin and exposed to the C# game layer.
+- Main menu: Continue, New Game, Save Slots, Settings, About & Version, Credits.
+- Pause menu: Resume, Settings, Save Now and return to the main menu.
+- Three persistent save slots with legacy save migration and delete/reset support.
+- Version label and in-game changelog sourced from `scripts/game/GameInfo.cs`.
+- Keyboard, gamepad and Android touch input.
+- Responsive menu panels and anchored touch controls for different display sizes.
 
-## C#
+## Settings
 
-Yes. This repo is now C#/.NET-first. Godot supports C# on Android, but Android export is still marked experimental by Godot. Android exports require .NET 9 or newer, so CI uses .NET 9. citehttps://docs.godotengine.org/en/4.7/tutorials/export/exporting_for_android.html
+Settings persist locally in `user://settings.cfg`:
+
+- Master, music and sound-effect volume.
+- Android touch-control visibility.
+- Desktop fullscreen option.
+- Reduced-motion option for parallax layers.
+
+## Android controls
+
+Landscape-first platform layout with a virtual analog joystick, jump, attack and pause controls. Touch controls are anchored to the display edges instead of using fixed screen coordinates. The UI uses a scrollable, adaptive menu panel for smaller displays.
+
+## Gameplay and presentation
+
+- C# player controller with acceleration, air control, coyote time and jump buffering.
+- Pixel overworld tiles, animated grass, trees and parallax scenery.
+- Walker enemies, combat, health, collectibles and respawning.
+- Loveglow ambient soundtrack and jump/attack/collect sounds synthesized as PCM at runtime with C# DSP.
 
 ## Kotlin bridge
 
-`android/platformer_bridge/` contains the Kotlin Android library. It exposes:
+`android/platformer_bridge/` contains the Kotlin Android plugin. The C# wrapper safely exposes vibration and toast support when the plugin is available.
 
-- `vibrate(milliseconds)`
-- `toast(message)`
+## Build and run
 
-The C# wrapper stays safe on desktop/editor builds and talks to the Android singleton only when the plugin exists.
-
-Godot 4.2+ uses the v2 Android plugin architecture, which packages Kotlin/Java Android libraries through Gradle. citehttps://docs.godotengine.org/en/4.7/tutorials/platform/android/android_plugin.html
-
-## Cloud build
-
-- `Godot Production Check` runs C# compilation and headless startup on pushes and pull requests.
-- `Android Debug APK` runs only on `main` pushes or manual dispatch.
-- Android APK artifacts expire after **7 days**.
-
-## Local run
-
-Use the **Godot .NET 4.7 editor**, not the standard GDScript-only editor.
+Use the **Godot .NET 4.7 editor** and .NET 9.
 
 ```sh
-dotnet build PlatformerGamePixel.csproj
-godot --path .
+dotnet build PlatformerGamePixel.csproj --configuration Release
+godot --headless --path . --quit-after 120
 ```
 
-For Android, the Gradle export path is enabled in `export_presets.cfg`. The Kotlin bridge requires the Android Gradle build flow.
+GitHub Actions runs the Godot C# validation workflow on pushes and pull requests. The Android debug APK workflow runs on pushes to `main` and manual dispatch; APK artifacts expire after 7 days.

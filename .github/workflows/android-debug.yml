@@ -45,7 +45,7 @@ jobs:
 
       - name: Build Kotlin Android bridge
         working-directory: android/platformer_bridge
-        run: gradle :plugin:assemble
+        run: gradle -Pandroid.useAndroidX=true -Pandroid.enableJetifier=false :plugin:assemble
 
       - name: Stage Android plugin AARs
         run: |

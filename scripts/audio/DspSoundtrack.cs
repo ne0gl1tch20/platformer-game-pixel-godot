@@ -10,15 +10,18 @@ public partial class DspSoundtrack : Node
     private AudioStreamPlayer _jumpPlayer;
     private AudioStreamPlayer _attackPlayer;
     private AudioStreamPlayer _collectPlayer;
+    private float _musicVolume = 0.65f;
+    private float _sfxVolume = 0.85f;
 
     public override void _Ready()
     {
+        ProcessMode = ProcessModeEnum.Always;
         Instance = this;
         _player = new AudioStreamPlayer
         {
             Name = "LoveglowPlayer",
             Stream = BuildLoveglowLoop(),
-            VolumeDb = -13f,
+            VolumeDb = Mathf.LinearToDb(_musicVolume) - 2f,
             Autoplay = false
         };
         AddChild(_player);
@@ -27,6 +30,21 @@ public partial class DspSoundtrack : Node
         _collectPlayer = AddEffectPlayer("CollectSfx", BuildEffect(760, 1320, 0.24, 0.13, true));
         _player.Play();
         GD.Print("[DSP Audio] Loveglow ambient loop started (synthesized PCM, no audio files).");
+    }
+
+    public void SetMusicVolume(float value)
+    {
+        _musicVolume = Mathf.Clamp(value, 0f, 1f);
+        if (_player != null) _player.VolumeDb = _musicVolume <= 0.001f ? -80f : Mathf.LinearToDb(_musicVolume) - 2f;
+    }
+
+    public void SetSfxVolume(float value)
+    {
+        _sfxVolume = Mathf.Clamp(value, 0f, 1f);
+        var db = _sfxVolume <= 0.001f ? -80f : Mathf.LinearToDb(_sfxVolume);
+        if (_jumpPlayer != null) _jumpPlayer.VolumeDb = db;
+        if (_attackPlayer != null) _attackPlayer.VolumeDb = db;
+        if (_collectPlayer != null) _collectPlayer.VolumeDb = db;
     }
 
     public void PlayJump() => _jumpPlayer?.Play();
