@@ -36,7 +36,8 @@ public partial class Platform : StaticBody2D
                 TextureFilter = CanvasItem.TextureFilterEnum.Nearest
             };
             AddChild(grass);
-            grass.Play("sway", (float)GD.RandRange(0, 4));
+            grass.Frame = (int)GD.RandRange(0, 3);
+            grass.Play("sway");
         }
         QueueRedraw();
     }
