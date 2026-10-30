@@ -267,7 +267,7 @@ public partial class GameShell : CanvasLayer
         _root.AddChild(panel);
 
         IsMenuOpen = true;
-        var scroll = new ScrollContainer { HorizontalScrollMode = ScrollContainer.ScrollModeEnum.Disabled, SizeFlagsHorizontal = Control.SizeFlags.ExpandFill, SizeFlagsVertical = Control.SizeFlags.ExpandFill };
+        var scroll = new ScrollContainer { HorizontalScrollMode = ScrollContainer.ScrollMode.Disabled, SizeFlagsHorizontal = Control.SizeFlags.ExpandFill, SizeFlagsVertical = Control.SizeFlags.ExpandFill };
         scroll.SetAnchorsAndOffsetsPreset(Control.LayoutPreset.FullRect);
         panel.AddChild(scroll);
         _content = new VBoxContainer { SizeFlagsHorizontal = Control.SizeFlags.ExpandFill, Alignment = BoxContainer.AlignmentMode.Center };
@@ -315,7 +315,7 @@ public partial class GameShell : CanvasLayer
     private void AddToggle(string label, bool value, Action<bool> changed)
     {
         var toggle = new CheckButton { Text = label, ButtonPressed = value, SizeFlagsHorizontal = Control.SizeFlags.ShrinkCenter };
-        toggle.Toggled += changed;
+        toggle.Toggled += value => changed(value);
         _content.AddChild(toggle);
     }
 
