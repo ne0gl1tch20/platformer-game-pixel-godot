@@ -10,6 +10,7 @@ public partial class GameShell : CanvasLayer
     public event Action<Vector2> JoystickMoved;
     public event Action JumpRequested;
     public event Action AttackRequested;
+    public event Action PauseRequested;
 
     private const string SettingsPath = "user://settings.cfg";
     private Control _root;
@@ -22,6 +23,7 @@ public partial class GameShell : CanvasLayer
     private bool _showTouch = true;
     private bool _fullscreen;
     private bool _reducedMotion;
+    private string _currentPage = "main";
 
     public override void _Ready()
     {
@@ -35,9 +37,11 @@ public partial class GameShell : CanvasLayer
     public void ShowMainMenu()
     {
         _returnPage = "main";
+        _currentPage = "main";
         BuildPage("PLATFORMER GAME PIXEL", "A little adventure through the Loveglow forest.");
         AddActionButton("CONTINUE", () => { PlayRequested?.Invoke(); HideShell(); });
         AddActionButton("NEW GAME", () => ConfirmNewGame());
+        AddActionButton("SAVE SLOTS", ShowSaveSlots);
         AddActionButton("SETTINGS", () => ShowSettings("main"));
         AddActionButton("ABOUT & VERSION", ShowAbout);
         AddActionButton("CREDITS", ShowCredits);
@@ -47,6 +51,7 @@ public partial class GameShell : CanvasLayer
     public void ShowPauseMenu()
     {
         _returnPage = "pause";
+        _currentPage = "pause";
         BuildPage("PAUSED", "Take a breather. The forest can wait.");
         AddActionButton("RESUME", () => { ResumeRequested?.Invoke(); HideShell(); });
         AddActionButton("SETTINGS", () => ShowSettings("pause"));
@@ -58,6 +63,7 @@ public partial class GameShell : CanvasLayer
     public void ShowSettings(string returnPage)
     {
         _returnPage = returnPage;
+        _currentPage = "settings";
         BuildPage("EXTENDED SETTINGS", "Your preferences are saved on this device.");
         AddSlider("MASTER VOLUME", _masterVolume, value => { _masterVolume = value; ApplyAudio(); SaveSettings(); });
         AddSlider("MUSIC VOLUME", _musicVolume, value => { _musicVolume = value; ApplyAudio(); SaveSettings(); });
@@ -72,6 +78,7 @@ public partial class GameShell : CanvasLayer
     public void ShowAbout()
     {
         _returnPage = "main";
+        _currentPage = "about";
         BuildPage("ABOUT THE GAME", "A cozy pixel-art platform adventure.");
         AddText(GameInfo.VersionLabel);
         AddText("Engine: Godot 4.7 .NET");
@@ -85,6 +92,7 @@ public partial class GameShell : CanvasLayer
 
     public void ShowCredits()
     {
+        _currentPage = "credits";
         BuildPage("CREDITS", "Made with care, pixels and procedural sound.");
         AddText("Game & code: Platformer Game Pixel");
         AddText("Music & sound: Loveglow DSP");
@@ -101,6 +109,36 @@ public partial class GameShell : CanvasLayer
         if (controls != null) controls.Visible = visible && _showTouch;
     }
 
+
+    public override void _UnhandledInput(InputEvent @event)
+    {
+        if (!@event.IsActionPressed("ui_cancel") || @event.IsEcho()) return;
+        if (!Visible)
+        {
+            PauseRequested?.Invoke();
+            GetViewport().SetInputAsHandled();
+            return;
+        }
+
+        if (_currentPage == "settings")
+        {
+            if (_returnPage == "pause") ShowPauseMenu();
+            else ShowMainMenu();
+            GetViewport().SetInputAsHandled();
+        }
+        else if (_currentPage == "pause")
+        {
+            ResumeRequested?.Invoke();
+            HideShell();
+            GetViewport().SetInputAsHandled();
+        }
+        else if (_currentPage != "main")
+        {
+            ShowMainMenu();
+            GetViewport().SetInputAsHandled();
+        }
+    }
+
     public void HideShell()
     {
         Visible = false;
@@ -111,8 +149,39 @@ public partial class GameShell : CanvasLayer
         Visible = true;
     }
 
+
+    private void ShowSaveSlots()
+    {
+        _currentPage = "saves";
+        BuildPage("SAVE SLOTS", "Choose which adventure to continue.");
+        for (var slot = 1; slot <= 3; slot++)
+        {
+            var selectedSlot = slot;
+            var summary = SaveSystem.Instance?.GetSlotSummary(slot) ?? "Unavailable";
+            AddActionButton($"SLOT {slot}  •  {summary}", () =>
+            {
+                SaveSystem.Instance?.SelectSlot(selectedSlot);
+                ShowMainMenu();
+            });
+        }
+        AddActionButton("DELETE CURRENT SLOT", () =>
+        {
+            _currentPage = "delete";
+            BuildPage("DELETE SAVE?", "This permanently clears the selected slot.");
+            AddActionButton("DELETE SLOT", () =>
+            {
+                SaveSystem.Instance?.DeleteSlot(SaveSystem.Instance.CurrentSlot);
+                ShowSaveSlots();
+            });
+            AddActionButton("CANCEL", ShowSaveSlots);
+        });
+        AddActionButton("BACK", ShowMainMenu);
+        AddFooter();
+    }
+
     private void ConfirmNewGame()
     {
+        _currentPage = "confirm";
         BuildPage("START A NEW GAME?", "Your selected save slot will be reset.");
         AddActionButton("START NEW GAME", () => { NewGameRequested?.Invoke(); HideShell(); });
         AddActionButton("CANCEL", ShowMainMenu);
