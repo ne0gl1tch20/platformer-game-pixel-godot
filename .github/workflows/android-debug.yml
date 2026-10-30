@@ -1,0 +1,72 @@
+name: Android Debug APK
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  android:
+    name: Build Android debug APK
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    env:
+      DOTNET_CLI_TELEMETRY_OPTOUT: true
+      DOTNET_NOLOGO: true
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v6
+
+      - name: Set up .NET 9
+        uses: actions/setup-dotnet@v6
+        with:
+          dotnet-version: 9.0.x
+
+      - name: Set up JDK 17
+        uses: actions/setup-java@v5
+        with:
+          distribution: temurin
+          java-version: '17'
+
+      - name: Set up Gradle
+        uses: gradle/actions/setup-gradle@v6
+        with:
+          gradle-version: '8.9'
+
+      - name: Set up Godot 4.7 .NET and Android templates
+        uses: chickensoft-games/setup-godot@v2
+        with:
+          version: 4.7.0
+          use-dotnet: true
+          include-templates: true
+
+      - name: Build Kotlin Android bridge
+        working-directory: android/platformer_bridge
+        run: gradle :plugin:assemble
+
+      - name: Stage Android plugin AARs
+        run: |
+          mkdir -p addons/platformer_bridge/bin/debug addons/platformer_bridge/bin/release
+          cp android/platformer_bridge/plugin/build/outputs/aar/plugin-debug.aar addons/platformer_bridge/bin/debug/platformer_bridge-debug.aar
+          cp android/platformer_bridge/plugin/build/outputs/aar/plugin-release.aar addons/platformer_bridge/bin/release/platformer_bridge-release.aar
+
+      - name: Build C# project
+        run: |
+          godot --headless --path . --build-solutions --quit || true
+          dotnet build PlatformerGamePixel.csproj --configuration Release
+
+      - name: Export debug APK
+        run: |
+          mkdir -p artifacts
+          godot --headless --path . --install-android-build-template --export-debug Android artifacts/PlatformerGamePixel-debug.apk
+
+      - name: Upload APK
+        uses: actions/upload-artifact@v6
+        with:
+          name: PlatformerGamePixel-debug-apk
+          path: artifacts/PlatformerGamePixel-debug.apk
+          if-no-files-found: error
+          retention-days: 7
