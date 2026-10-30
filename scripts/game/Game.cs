@@ -15,7 +15,6 @@ public partial class Game : Node2D
 
     public override void _Ready()
     {
-        ProcessMode = ProcessModeEnum.Always;
         ConfigureInput();
         GD.Print("[Game] Booting production game...");
         BuildWorld();
@@ -175,12 +174,20 @@ public partial class Game : Node2D
         _shell = new GameShell { Name = "GameShell" };
         AddChild(_shell);
         _shell.PlayRequested += StartGame;
+        _shell.PauseRequested += PauseGame;
         _shell.ResumeRequested += ResumeGame;
         _shell.NewGameRequested += StartNewGame;
         _shell.ReturnToMenuRequested += ReturnToMenu;
         _shell.JoystickMoved += direction => _player?.SetTouchDirection(direction.X);
         _shell.JumpRequested += () => _player?.PressTouchJump();
         _shell.AttackRequested += () => _player?.PerformTouchAttack();
+    }
+
+    private void PauseGame()
+    {
+        if (!_gameStarted) return;
+        GetTree().Paused = true;
+        _shell.ShowPauseMenu();
     }
 
     private void StartGame()
