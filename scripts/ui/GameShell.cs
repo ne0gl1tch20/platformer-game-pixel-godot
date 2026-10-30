@@ -11,6 +11,7 @@ public partial class GameShell : CanvasLayer
     public event Action JumpRequested;
     public event Action AttackRequested;
     public event Action PauseRequested;
+    public event Action SaveSlotChanged;
 
     private const string SettingsPath = "user://settings.cfg";
     private Control _root;
@@ -70,7 +71,7 @@ public partial class GameShell : CanvasLayer
         AddSlider("MUSIC VOLUME", _musicVolume, value => { _musicVolume = value; ApplyAudio(); SaveSettings(); });
         AddSlider("SFX VOLUME", _sfxVolume, value => { _sfxVolume = value; ApplyAudio(); SaveSettings(); });
         AddToggle("SHOW TOUCH CONTROLS", _showTouch, value => { _showTouch = value; SetTouchVisible(value); SaveSettings(); });
-        AddToggle("FULLSCREEN", _fullscreen, value => { _fullscreen = value; ApplyDisplay(); SaveSettings(); });
+        if (!OS.HasFeature("mobile")) AddToggle("FULLSCREEN", _fullscreen, value => { _fullscreen = value; ApplyDisplay(); SaveSettings(); });
         AddToggle("REDUCED MOTION", _reducedMotion, value => { _reducedMotion = value; SaveSettings(); });
         AddActionButton("BACK", () => { if (_returnPage == "pause") ShowPauseMenu(); else ShowMainMenu(); });
         AddFooter();
@@ -166,6 +167,7 @@ public partial class GameShell : CanvasLayer
             AddActionButton($"SLOT {slot}  •  {summary}", () =>
             {
                 SaveSystem.Instance?.SelectSlot(selectedSlot);
+                SaveSlotChanged?.Invoke();
                 ShowMainMenu();
             });
         }
@@ -176,6 +178,7 @@ public partial class GameShell : CanvasLayer
             AddActionButton("DELETE SLOT", () =>
             {
                 SaveSystem.Instance?.DeleteSlot(SaveSystem.Instance.CurrentSlot);
+                SaveSlotChanged?.Invoke();
                 ShowSaveSlots();
             });
             AddActionButton("CANCEL", ShowSaveSlots);
@@ -255,14 +258,10 @@ public partial class GameShell : CanvasLayer
         var panel = new PanelContainer
         {
             Name = "MenuPanel",
-            AnchorLeft = 0.5f,
-            AnchorTop = 0.5f,
-            AnchorRight = 0.5f,
-            AnchorBottom = 0.5f,
-            OffsetLeft = -190,
-            OffsetTop = -132,
-            OffsetRight = 190,
-            OffsetBottom = 132
+            AnchorLeft = 0.06f,
+            AnchorTop = 0.06f,
+            AnchorRight = 0.94f,
+            AnchorBottom = 0.94f
         };
         panel.AddThemeStyleboxOverride("panel", MakePanelStyle());
         _root.AddChild(panel);
@@ -290,7 +289,8 @@ public partial class GameShell : CanvasLayer
 
     private void AddActionButton(string label, Action action)
     {
-        var button = new Button { Text = label, CustomMinimumSize = new Vector2(230, 36), SizeFlagsHorizontal = Control.SizeFlags.ShrinkCenter, FocusMode = Control.FocusModeEnum.None };
+        var buttonWidth = Mathf.Max(150f, Mathf.Min(230f, _root.Size.X - 76f));
+        var button = new Button { Text = label, CustomMinimumSize = new Vector2(buttonWidth, 36), SizeFlagsHorizontal = Control.SizeFlags.ShrinkCenter, FocusMode = Control.FocusModeEnum.None };
         button.AddThemeFontSizeOverride("font_size", 14);
         button.Pressed += action;
         _content.AddChild(button);
@@ -298,7 +298,7 @@ public partial class GameShell : CanvasLayer
 
     private void AddText(string text)
     {
-        var label = new Label { Text = text, AutowrapMode = TextServer.AutowrapMode.WordSmart, HorizontalAlignment = HorizontalAlignment.Center, CustomMinimumSize = new Vector2(260, 0) };
+        var label = new Label { Text = text, AutowrapMode = TextServer.AutowrapMode.WordSmart, HorizontalAlignment = HorizontalAlignment.Center, CustomMinimumSize = new Vector2(Mathf.Max(150f, Mathf.Min(260f, _root.Size.X - 90f)), 0) };
         label.AddThemeFontSizeOverride("font_size", 12);
         label.AddThemeColorOverride("font_color", new Color("e0e8d9"));
         _content.AddChild(label);
@@ -307,7 +307,7 @@ public partial class GameShell : CanvasLayer
     private void AddSlider(string label, float value, Action<float> changed)
     {
         AddText($"{label}: {Mathf.RoundToInt(value * 100)}%");
-        var slider = new HSlider { MinValue = 0, MaxValue = 1, Step = 0.01, Value = value, CustomMinimumSize = new Vector2(250, 24), SizeFlagsHorizontal = Control.SizeFlags.ShrinkCenter };
+        var slider = new HSlider { MinValue = 0, MaxValue = 1, Step = 0.01, Value = value, CustomMinimumSize = new Vector2(Mathf.Max(140f, Mathf.Min(250f, _root.Size.X - 100f)), 24), SizeFlagsHorizontal = Control.SizeFlags.ShrinkCenter };
         slider.ValueChanged += number => changed((float)number);
         _content.AddChild(slider);
     }
@@ -361,7 +361,7 @@ public partial class GameShell : CanvasLayer
 
     private void ApplyDisplay()
     {
-        DisplayServer.WindowSetMode(_fullscreen ? DisplayServer.WindowMode.Fullscreen : DisplayServer.WindowMode.Windowed);
+        if (!OS.HasFeature("mobile")) DisplayServer.WindowSetMode(_fullscreen ? DisplayServer.WindowMode.Fullscreen : DisplayServer.WindowMode.Windowed);
     }
 
     private void LoadSettings()
