@@ -4,7 +4,11 @@ public partial class SaveSystem : Node
 {
     public static SaveSystem Instance { get; private set; }
 
-    private const string SavePath = "user://save.json";
+    private const string LegacySavePath = "user://save.json";
+    private const int SlotCount = 3;
+    private int _currentSlot = 1;
+
+    public int CurrentSlot => _currentSlot;
     public int BestScore { get; private set; }
     public int Coins { get; private set; }
     public int CheckpointX { get; private set; } = 64;
@@ -13,7 +17,7 @@ public partial class SaveSystem : Node
     public override void _Ready()
     {
         Instance = this;
-        Load();
+        LoadSlot(_currentSlot, migrateLegacySave: true);
     }
 
     public void AddCoins(int amount)
@@ -65,12 +69,13 @@ public partial class SaveSystem : Node
         }
 
         if (_currentSlot == slot) return;
+
         Save();
         _currentSlot = slot;
         LoadSlot(slot);
     }
 
-    /// <summary>Deletes a slot. Deleting the active slot resets it to a fresh save.</summary>
+    /// <summary>Deletes a slot. Deleting the active slot resets its in-memory progress.</summary>
     public void DeleteSlot(int slot)
     {
         if (!IsValidSlot(slot))
@@ -91,9 +96,7 @@ public partial class SaveSystem : Node
         }
 
         if (_currentSlot == slot)
-        {
             ResetProgress();
-        }
     }
 
     /// <summary>Starts a fresh adventure in the currently selected slot.</summary>
@@ -113,29 +116,58 @@ public partial class SaveSystem : Node
             return;
         }
 
-		var data = new Godot.Collections.Dictionary
-		{
-			["version"] = 1,
-			["best_score"] = BestScore,
-			["coins"] = Coins,
-			["checkpoint_x"] = CheckpointX,
-			["checkpoint_y"] = CheckpointY
-		};
-		file.StoreString(Json.Stringify(data));
-	}
+        var data = new Godot.Collections.Dictionary
+        {
+            ["version"] = 1,
+            ["best_score"] = BestScore,
+            ["coins"] = Coins,
+            ["checkpoint_x"] = CheckpointX,
+            ["checkpoint_y"] = CheckpointY
+        };
 
-    private void Load()
+        file.StoreString(Json.Stringify(data));
+    }
+
+    private void LoadSlot(int slot, bool migrateLegacySave = false)
     {
-        if (!FileAccess.FileExists(SavePath)) return;
-        using var file = FileAccess.Open(SavePath, FileAccess.ModeFlags.Read);
-        if (file == null) return;
+        ResetProgress();
 
-        var parsed = Json.ParseString(file.GetAsText());
-        if (parsed.VariantType != Variant.Type.Dictionary) return;
-        var data = parsed.AsGodotDictionary();
+        var path = GetSlotPath(slot);
+        if (FileAccess.FileExists(path))
+        {
+            LoadFromPath(path);
+            return;
+        }
 
-        BestScore = GetInt(data, "best_score", 0);
-        Coins = GetInt(data, "coins", 0);
+        // Migrate the original single-file save only when slot 1 is empty.
+        if (migrateLegacySave && slot == 1 && FileAccess.FileExists(LegacySavePath))
+        {
+            LoadFromPath(LegacySavePath);
+            Save();
+
+            // Remove the legacy file only after the new slot file was written.
+            if (FileAccess.FileExists(path))
+            {
+                var error = DirAccess.RemoveAbsolute(ProjectSettings.GlobalizePath(LegacySavePath));
+                if (error != Error.Ok)
+                    GD.PushWarning($"[Save] Migrated slot 1, but could not remove the old save: {error}");
+                else
+                    GD.Print("[Save] Migrated legacy save.json into slot 1.");
+            }
+        }
+    }
+
+    private void LoadFromPath(string path)
+    {
+        var data = ReadSaveData(path);
+        if (data == null)
+        {
+            GD.PushWarning($"[Save] Save data at {path} is invalid. Starting with default progress.");
+            return;
+        }
+
+        BestScore = Mathf.Max(0, GetInt(data, "best_score", 0));
+        Coins = Mathf.Max(0, GetInt(data, "coins", 0));
         CheckpointX = GetInt(data, "checkpoint_x", 64);
         CheckpointY = GetInt(data, "checkpoint_y", 220);
     }
@@ -158,7 +190,7 @@ public partial class SaveSystem : Node
         CheckpointY = 220;
     }
 
-    private string GetSlotPath(int slot) => $"user://save_slot_{slot}.json";
+    private static string GetSlotPath(int slot) => $"user://save_slot_{slot}.json";
 
     private static bool IsValidSlot(int slot) => slot >= 1 && slot <= SlotCount;
 
