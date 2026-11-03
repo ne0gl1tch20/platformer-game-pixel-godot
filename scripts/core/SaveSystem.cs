@@ -144,6 +144,16 @@ public partial class SaveSystem : Node
         {
             LoadFromPath(LegacySavePath);
             Save();
+
+            // Remove the old single-slot file after the slot copy exists so a
+            // later deletion of slot 1 cannot accidentally restore old progress.
+            if (FileAccess.FileExists(path))
+            {
+                var removeError = DirAccess.RemoveAbsolute(ProjectSettings.GlobalizePath(LegacySavePath));
+                if (removeError != Error.Ok)
+                    GD.PushWarning($"[Save] Slot 1 was migrated, but legacy save cleanup failed: {removeError}");
+            }
+
             GD.Print("[Save] Migrated legacy save.json into slot 1.");
         }
     }
