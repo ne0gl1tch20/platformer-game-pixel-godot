@@ -1,178 +1,291 @@
+
 using Godot;
 
 public partial class SaveSystem : Node
 {
-	public static SaveSystem Instance { get; private set; }
+    private const int SlotCount = 3;
+    private const int DefaultSlot = 1;
+    private const string LegacySavePath = "user://save.json";
 
-	private const string SavePath = "user://save.json";
-	public int BestScore { get; private set; }
-	public int Coins { get; private set; }
-	public int CheckpointX { get; private set; } = 64;
-	public int CheckpointY { get; private set; } = 220;
+    public static SaveSystem Instance { get; private set; }
 
-	public override void _Ready()
-	{
-		Instance = this;
-		Load();
-	}
+    private int _currentSlot = DefaultSlot;
 
-	public void AddCoins(int amount)
-	{
-		if (amount <= 0) return;
-		Coins += amount;
-		Save();
-	}
+    public int CurrentSlot => _currentSlot;
+    public int BestScore { get; private set; }
+    public int Coins { get; private set; }
+    public int CheckpointX { get; private set; } = 64;
+    public int CheckpointY { get; private set; } = 220;
 
-	public void SetBestScore(int score)
-	{
-		if (score <= BestScore) return;
-		BestScore = score;
-		Save();
-	}
+    public override void _Ready()
+    {
+        Instance = this;
+        LoadInitialSave();
+    }
 
-	public void SetCheckpoint(Vector2 position)
-	{
-		CheckpointX = Mathf.RoundToInt(position.X);
-		CheckpointY = Mathf.RoundToInt(position.Y);
-		Save();
-	}
+    public override void _ExitTree()
+    {
+        if (Instance == this)
+            Instance = null;
+    }
 
-	public Vector2 GetCheckpoint() => new(CheckpointX, CheckpointY);
+    public void AddCoins(int amount)
+    {
+        if (amount <= 0)
+            return;
 
-	/// <summary>Returns a short UI-friendly description of a save slot.</summary>
-	public string GetSlotSummary(int slot)
-	{
-		if (!IsValidSlot(slot)) return "INVALID SLOT";
+        Coins += amount;
+        Save();
+    }
 
-		var path = GetSlotPath(slot);
-		if (!FileAccess.FileExists(path)) return "EMPTY";
+    public void SetBestScore(int score)
+    {
+        if (score <= BestScore)
+            return;
 
-		var data = ReadSaveData(path);
-		if (data == null) return "CORRUPTED SAVE";
+        BestScore = score;
+        Save();
+    }
 
-		var coins = GetInt(data, "coins", 0);
-		var best = GetInt(data, "best_score", 0);
-		return $"CRYSTALS {coins}  •  BEST {best}";
-	}
+    public void SetCheckpoint(Vector2 position)
+    {
+        CheckpointX = Mathf.RoundToInt(position.X);
+        CheckpointY = Mathf.RoundToInt(position.Y);
+        Save();
+    }
 
-	/// <summary>Changes the active save slot and loads its progress.</summary>
-	public void SelectSlot(int slot)
-	{
-		if (!IsValidSlot(slot))
-		{
-			GD.PushWarning($"[Save] Ignoring invalid slot selection: {slot}");
-			return;
-		}
+    public Vector2 GetCheckpoint()
+    {
+        return new Vector2(CheckpointX, CheckpointY);
+    }
 
-		if (_currentSlot == slot) return;
-		Save();
-		_currentSlot = slot;
-		LoadSlot(slot);
-	}
+    public string GetSlotSummary(int slot)
+    {
+        if (!IsValidSlot(slot))
+            return "INVALID SLOT";
 
-	/// <summary>Deletes a slot. Deleting the active slot resets it to a fresh save.</summary>
-	public void DeleteSlot(int slot)
-	{
-		if (!IsValidSlot(slot))
-		{
-			GD.PushWarning($"[Save] Ignoring invalid slot deletion: {slot}");
-			return;
-		}
+        string path = GetSlotPath(slot);
 
-		var path = GetSlotPath(slot);
-		if (FileAccess.FileExists(path))
-		{
-			var error = DirAccess.RemoveAbsolute(ProjectSettings.GlobalizePath(path));
-			if (error != Error.Ok)
-			{
-				GD.PushWarning($"[Save] Could not delete slot {slot}: {error}");
-				return;
-			}
-		}
+        if (!FileAccess.FileExists(path))
+            return "EMPTY";
 
-		if (_currentSlot == slot)
-		{
-			ResetProgress();
-		}
-	}
+        var data = ReadSaveData(path);
 
-	/// <summary>Starts a fresh adventure in the currently selected slot.</summary>
-	public void NewGame()
-	{
-		ResetProgress();
-		Save();
-	}
+        if (data == null)
+            return "CORRUPTED SAVE";
 
-	public void Save()
-	{
-		var path = GetSlotPath(_currentSlot);
-		using var file = FileAccess.Open(path, FileAccess.ModeFlags.Write);
-		if (file == null)
-		{
-			GD.PushWarning($"[Save] Could not open slot {_currentSlot}: {FileAccess.GetOpenError()}");
-			return;
-		}
+        int coins = GetInt(data, "coins", 0);
+        int best = GetInt(data, "best_score", 0);
 
-		var data = new Godot.Collections.Dictionary
-		{
-			["version"] = 1,
-			["best_score"] = BestScore,
-			["coins"] = Coins,
-			["checkpoint_x"] = CheckpointX,
-			["checkpoint_y"] = CheckpointY
-		};
+        return $"COINS {coins}  •  BEST {best}";
+    }
 
-		file.StoreString(Json.Stringify(data));
-	}
+    public void SelectSlot(int slot)
+    {
+        if (!IsValidSlot(slot))
+        {
+            GD.PushWarning($"[Save] Invalid slot selection: {slot}");
+            return;
+        }
 
-	private void Load()
-	{
-		if (!FileAccess.FileExists(SavePath)) return;
-		using var file = FileAccess.Open(SavePath, FileAccess.ModeFlags.Read);
-		if (file == null) return;
+        if (_currentSlot == slot)
+            return;
 
-		var parsed = Json.ParseString(file.GetAsText());
-		if (parsed.VariantType != Variant.Type.Dictionary) return;
-		var data = parsed.AsGodotDictionary();
+        Save();
+        _currentSlot = slot;
+        LoadSlot(slot);
+    }
 
-		BestScore = GetInt(data, "best_score", 0);
-		Coins = GetInt(data, "coins", 0);
-		CheckpointX = GetInt(data, "checkpoint_x", 64);
-		CheckpointY = GetInt(data, "checkpoint_y", 220);
-	}
+    public void DeleteSlot(int slot)
+    {
+        if (!IsValidSlot(slot))
+        {
+            GD.PushWarning($"[Save] Invalid slot deletion: {slot}");
+            return;
+        }
 
-	private static Godot.Collections.Dictionary ReadSaveData(string path)
-	{
-		using var file = FileAccess.Open(path, FileAccess.ModeFlags.Read);
-		if (file == null) return null;
+        string path = GetSlotPath(slot);
 
-		var parsed = Json.ParseString(file.GetAsText());
-		if (parsed.VariantType != Variant.Type.Dictionary) return null;
-		return parsed.AsGodotDictionary();
-	}
+        if (FileAccess.FileExists(path))
+        {
+            Error error = DirAccess.RemoveAbsolute(
+                ProjectSettings.GlobalizePath(path)
+            );
 
-	private void ResetProgress()
-	{
-		BestScore = 0;
-		Coins = 0;
-		CheckpointX = 64;
-		CheckpointY = 220;
-	}
+            if (error != Error.Ok)
+            {
+                GD.PushWarning($"[Save] Could not delete slot {slot}: {error}");
+                return;
+            }
+        }
 
-	private string GetSlotPath(int slot) => $"user://save_slot_{slot}.json";
+        if (_currentSlot == slot)
+            ResetProgress();
+    }
 
-	private static bool IsValidSlot(int slot) => slot >= 1 && slot <= SlotCount;
+    public void NewGame()
+    {
+        ResetProgress();
+        Save();
+    }
 
-	private static int GetInt(Godot.Collections.Dictionary data, string key, int fallback)
-	{
-		if (!data.ContainsKey(key)) return fallback;
+    public void Save()
+    {
+        if (!IsValidSlot(_currentSlot))
+        {
+            GD.PushWarning($"[Save] Invalid active slot: {_currentSlot}");
+            return;
+        }
 
-		var value = data[key];
-		return value.VariantType switch
-		{
-			Variant.Type.Int => (int)value,
-			Variant.Type.Float => Mathf.RoundToInt((float)value),
-			_ => fallback
-		};
-	}
+        string path = GetSlotPath(_currentSlot);
+
+        using var file = FileAccess.Open(
+            path,
+            FileAccess.ModeFlags.Write
+        );
+
+        if (file == null)
+        {
+            GD.PushWarning(
+                $"[Save] Could not open slot {_currentSlot}: {FileAccess.GetOpenError()}"
+            );
+            return;
+        }
+
+        var data = new Godot.Collections.Dictionary
+        {
+            ["version"] = 1,
+            ["best_score"] = BestScore,
+            ["coins"] = Coins,
+            ["checkpoint_x"] = CheckpointX,
+            ["checkpoint_y"] = CheckpointY
+        };
+
+        file.StoreString(Json.Stringify(data));
+        file.Flush();
+    }
+
+    private void LoadInitialSave()
+    {
+        _currentSlot = DefaultSlot;
+
+        if (FileAccess.FileExists(GetSlotPath(_currentSlot)))
+        {
+            LoadSlot(_currentSlot);
+            return;
+        }
+
+        // Migrate the old single-file save into slot 1.
+        if (FileAccess.FileExists(LegacySavePath))
+        {
+            var legacyData = ReadSaveData(LegacySavePath);
+
+            if (legacyData != null)
+            {
+                ApplySaveData(legacyData);
+                Save();
+                return;
+            }
+
+            GD.PushWarning("[Save] Legacy save is invalid.");
+        }
+
+        ResetProgress();
+    }
+
+    private void LoadSlot(int slot)
+    {
+        if (!IsValidSlot(slot))
+        {
+            GD.PushWarning($"[Save] Invalid slot load: {slot}");
+            return;
+        }
+
+        string path = GetSlotPath(slot);
+
+        if (!FileAccess.FileExists(path))
+        {
+            ResetProgress();
+            return;
+        }
+
+        var data = ReadSaveData(path);
+
+        if (data == null)
+        {
+            GD.PushWarning($"[Save] Slot {slot} contains invalid data.");
+            ResetProgress();
+            return;
+        }
+
+        ApplySaveData(data);
+    }
+
+    private static Godot.Collections.Dictionary ReadSaveData(string path)
+    {
+        using var file = FileAccess.Open(
+            path,
+            FileAccess.ModeFlags.Read
+        );
+
+        if (file == null)
+        {
+            GD.PushWarning(
+                $"[Save] Could not read {path}: {FileAccess.GetOpenError()}"
+            );
+            return null;
+        }
+
+        Variant parsed = Json.ParseString(file.GetAsText());
+
+        if (parsed.VariantType != Variant.Type.Dictionary)
+            return null;
+
+        return parsed.AsGodotDictionary();
+    }
+
+    private void ApplySaveData(Godot.Collections.Dictionary data)
+    {
+        BestScore = Mathf.Max(0, GetInt(data, "best_score", 0));
+        Coins = Mathf.Max(0, GetInt(data, "coins", 0));
+        CheckpointX = GetInt(data, "checkpoint_x", 64);
+        CheckpointY = GetInt(data, "checkpoint_y", 220);
+    }
+
+    private void ResetProgress()
+    {
+        BestScore = 0;
+        Coins = 0;
+        CheckpointX = 64;
+        CheckpointY = 220;
+    }
+
+    private static string GetSlotPath(int slot)
+    {
+        return $"user://save_slot_{slot}.json";
+    }
+
+    private static bool IsValidSlot(int slot)
+    {
+        return slot >= 1 && slot <= SlotCount;
+    }
+
+    private static int GetInt(
+        Godot.Collections.Dictionary data,
+        string key,
+        int fallback
+    )
+    {
+        if (!data.ContainsKey(key))
+            return fallback;
+
+        Variant value = data[key];
+
+        return value.VariantType switch
+        {
+            Variant.Type.Int => (int)value,
+            Variant.Type.Float => Mathf.RoundToInt((float)value),
+            _ => fallback
+        };
+    }
 }
