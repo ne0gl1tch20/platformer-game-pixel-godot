@@ -15,6 +15,7 @@ public partial class GameShell : CanvasLayer
 
     private const string SettingsPath = "user://settings.cfg";
     private Control _root;
+    private FontFile _pixelFont;
     private VBoxContainer _content;
     private Label _message;
     private string _returnPage = "main";
@@ -240,7 +241,7 @@ public partial class GameShell : CanvasLayer
             CustomMinimumSize = size,
             FocusMode = Control.FocusModeEnum.None
         };
-        button.AddThemeFontSizeOverride("font_size", 16);
+        button.AddThemeFontSizeOverride("font_size", 8);
         button.Modulate = new Color(1f, 1f, 1f, 0.88f);
         parent.AddChild(button);
         return button;
@@ -278,8 +279,17 @@ public partial class GameShell : CanvasLayer
         scroll.AddChild(_content);
 
         var heading = new Label { Text = title, HorizontalAlignment = HorizontalAlignment.Center, AutowrapMode = TextServer.AutowrapMode.WordSmart };
-        heading.AddThemeFontSizeOverride("font_size", 22);
+        heading.AddThemeFontSizeOverride("font_size", 16);
+        if (_pixelFont != null) heading.AddThemeFontOverride("font", _pixelFont);
         heading.AddThemeColorOverride("font_color", new Color("ffe29a"));
+        var divider = new ColorRect
+        {
+            Color = new Color("c9a85e"),
+            CustomMinimumSize = new Vector2(112, 2),
+            SizeFlagsHorizontal = Control.SizeFlags.ShrinkCenter,
+            MouseFilter = Control.MouseFilterEnum.Ignore
+        };
+        _content.AddChild(divider);
         heading.AddThemeColorOverride("font_shadow_color", new Color("101f28"));
         heading.AddThemeConstantOverride("shadow_offset_x", 2);
         heading.AddThemeConstantOverride("shadow_offset_y", 2);
@@ -304,7 +314,7 @@ public partial class GameShell : CanvasLayer
             FocusMode = Control.FocusModeEnum.All,
             MouseDefaultCursorShape = Control.CursorShape.PointingHand
         };
-        button.AddThemeFontSizeOverride("font_size", 13);
+        button.AddThemeFontSizeOverride("font_size", 8);
         button.Pressed += action;
         _content.AddChild(button);
     }
@@ -345,6 +355,7 @@ public partial class GameShell : CanvasLayer
     private Theme CreatePixelTheme()
     {
         var theme = new Theme();
+        _pixelFont = GD.Load<FontFile>("res://assets/fonts/PressStart2P-Regular.ttf");
         var normal = MakeButtonStyle(new Color("315b4b"), new Color("e7c77d"), new Color("203d37"));
         var hover = MakeButtonStyle(new Color("477b5c"), new Color("fff0ae"), new Color("284a3d"));
         var pressed = MakeButtonStyle(new Color("203f3b"), new Color("c79d58"), new Color("152e30"));
@@ -359,7 +370,8 @@ public partial class GameShell : CanvasLayer
         theme.SetColor("font_hover_color", "Button", Colors.White);
         theme.SetColor("font_pressed_color", "Button", new Color("f7d98e"));
         theme.SetColor("font_disabled_color", "Button", new Color("91a398"));
-        theme.SetFontSize("font_size", "Button", 13);
+        theme.SetFontSize("font_size", "Button", 8);
+        if (_pixelFont != null) theme.SetFont("font", "Button", _pixelFont);
 
         theme.SetStylebox("panel", "PanelContainer", MakePanelStyle());
         theme.SetStylebox("normal", "CheckButton", normal);
@@ -367,11 +379,17 @@ public partial class GameShell : CanvasLayer
         theme.SetStylebox("pressed", "CheckButton", pressed);
         theme.SetColor("font_color", "CheckButton", new Color("fff2cf"));
         theme.SetColor("font_hover_color", "CheckButton", Colors.White);
-        theme.SetFontSize("font_size", "CheckButton", 12);
+        theme.SetFontSize("font_size", "CheckButton", 8);
+        if (_pixelFont != null) theme.SetFont("font", "CheckButton", _pixelFont);
 
         theme.SetStylebox("slider", "HSlider", MakeSliderTrack());
         theme.SetStylebox("grabber_area", "HSlider", MakeSliderFill());
         theme.SetStylebox("grabber_area_highlight", "HSlider", MakeSliderFill());
+        theme.SetStylebox("grabber", "HSlider", MakeSliderGrabber(new Color("f5d98f")));
+        theme.SetStylebox("grabber_highlight", "HSlider", MakeSliderGrabber(new Color("fff0bd")));
+        theme.SetStylebox("scroll", "VScrollBar", MakeScrollTrack());
+        theme.SetStylebox("grabber", "VScrollBar", MakeSliderGrabber(new Color("c9a85e")));
+        theme.SetStylebox("grabber_highlight", "VScrollBar", MakeSliderGrabber(new Color("f5d98f")));
         theme.SetColor("font_color", "Label", new Color("e8e4c8"));
         return theme;
     }
@@ -397,6 +415,44 @@ public partial class GameShell : CanvasLayer
             ContentMarginRight = 12,
             ContentMarginTop = 7,
             ContentMarginBottom = 7
+        };
+    }
+
+    private static StyleBoxFlat MakeSliderGrabber(Color fill)
+    {
+        return new StyleBoxFlat
+        {
+            BgColor = fill,
+            BorderColor = new Color("172f32"),
+            BorderWidthLeft = 2,
+            BorderWidthRight = 2,
+            BorderWidthTop = 2,
+            BorderWidthBottom = 2,
+            CornerRadiusTopLeft = 0,
+            CornerRadiusTopRight = 0,
+            CornerRadiusBottomLeft = 0,
+            CornerRadiusBottomRight = 0,
+            ContentMarginLeft = 4,
+            ContentMarginRight = 4,
+            ContentMarginTop = 4,
+            ContentMarginBottom = 4
+        };
+    }
+
+    private static StyleBoxFlat MakeScrollTrack()
+    {
+        return new StyleBoxFlat
+        {
+            BgColor = new Color("142c30"),
+            BorderColor = new Color("8f774d"),
+            BorderWidthLeft = 1,
+            BorderWidthRight = 1,
+            BorderWidthTop = 1,
+            BorderWidthBottom = 1,
+            CornerRadiusTopLeft = 0,
+            CornerRadiusTopRight = 0,
+            CornerRadiusBottomLeft = 0,
+            CornerRadiusBottomRight = 0
         };
     }
 
