@@ -200,6 +200,7 @@ public partial class GameShell : CanvasLayer
         _root = new Control { Name = "ShellRoot" };
         _root.SetAnchorsAndOffsetsPreset(Control.LayoutPreset.FullRect);
         _root.MouseFilter = Control.MouseFilterEnum.Stop;
+        _root.Theme = CreatePixelTheme();
         AddChild(_root);
         BuildTouchControls();
     }
@@ -261,7 +262,8 @@ public partial class GameShell : CanvasLayer
             AnchorLeft = 0.06f,
             AnchorTop = 0.06f,
             AnchorRight = 0.94f,
-            AnchorBottom = 0.94f
+            AnchorBottom = 0.94f,
+            MouseFilter = Control.MouseFilterEnum.Stop
         };
         panel.AddThemeStyleboxOverride("panel", MakePanelStyle());
         _root.AddChild(panel);
@@ -276,7 +278,10 @@ public partial class GameShell : CanvasLayer
 
         var heading = new Label { Text = title, HorizontalAlignment = HorizontalAlignment.Center, AutowrapMode = TextServer.AutowrapMode.WordSmart };
         heading.AddThemeFontSizeOverride("font_size", 22);
-        heading.AddThemeColorOverride("font_color", new Color("f4e6b9"));
+        heading.AddThemeColorOverride("font_color", new Color("ffe29a"));
+        heading.AddThemeColorOverride("font_shadow_color", new Color("101f28"));
+        heading.AddThemeConstantOverride("shadow_offset_x", 2);
+        heading.AddThemeConstantOverride("shadow_offset_y", 2);
         _content.AddChild(heading);
         var caption = new Label { Text = subtitle, HorizontalAlignment = HorizontalAlignment.Center, AutowrapMode = TextServer.AutowrapMode.WordSmart };
         caption.AddThemeFontSizeOverride("font_size", 12);
@@ -290,8 +295,15 @@ public partial class GameShell : CanvasLayer
     private void AddActionButton(string label, Action action)
     {
         var buttonWidth = Mathf.Max(150f, Mathf.Min(230f, GetViewport().GetVisibleRect().Size.X - 76f));
-        var button = new Button { Text = label, CustomMinimumSize = new Vector2(buttonWidth, 36), SizeFlagsHorizontal = Control.SizeFlags.ShrinkCenter, FocusMode = Control.FocusModeEnum.None };
-        button.AddThemeFontSizeOverride("font_size", 14);
+        var button = new Button
+        {
+            Text = label,
+            CustomMinimumSize = new Vector2(buttonWidth, 38),
+            SizeFlagsHorizontal = Control.SizeFlags.ShrinkCenter,
+            FocusMode = Control.FocusModeEnum.All,
+            MouseDefaultCursorShape = Control.CursorShape.PointingHand
+        };
+        button.AddThemeFontSizeOverride("font_size", 13);
         button.Pressed += action;
         _content.AddChild(button);
     }
@@ -329,26 +341,117 @@ public partial class GameShell : CanvasLayer
         if (_message != null) _message.Text = text;
     }
 
-    private static StyleBoxFlat MakePanelStyle()
+    private Theme CreatePixelTheme()
     {
-        var style = new StyleBoxFlat
+        var theme = new Theme();
+        var normal = MakeButtonStyle(new Color("315b4b"), new Color("e7c77d"), new Color("203d37"));
+        var hover = MakeButtonStyle(new Color("477b5c"), new Color("fff0ae"), new Color("284a3d"));
+        var pressed = MakeButtonStyle(new Color("203f3b"), new Color("c79d58"), new Color("152e30"));
+        var disabled = MakeButtonStyle(new Color("344b48"), new Color("687d70"), new Color("243b39"));
+
+        theme.SetStylebox("normal", "Button", normal);
+        theme.SetStylebox("hover", "Button", hover);
+        theme.SetStylebox("pressed", "Button", pressed);
+        theme.SetStylebox("focus", "Button", hover);
+        theme.SetStylebox("disabled", "Button", disabled);
+        theme.SetColor("font_color", "Button", new Color("fff2cf"));
+        theme.SetColor("font_hover_color", "Button", Colors.White);
+        theme.SetColor("font_pressed_color", "Button", new Color("f7d98e"));
+        theme.SetColor("font_disabled_color", "Button", new Color("91a398"));
+        theme.SetFontSize("font_size", "Button", 13);
+
+        theme.SetStylebox("panel", "PanelContainer", MakePanelStyle());
+        theme.SetStylebox("normal", "CheckButton", normal);
+        theme.SetStylebox("hover", "CheckButton", hover);
+        theme.SetStylebox("pressed", "CheckButton", pressed);
+        theme.SetColor("font_color", "CheckButton", new Color("fff2cf"));
+        theme.SetColor("font_hover_color", "CheckButton", Colors.White);
+        theme.SetFontSize("font_size", "CheckButton", 12);
+
+        theme.SetStylebox("slider", "HSlider", MakeSliderTrack());
+        theme.SetStylebox("grabber_area", "HSlider", MakeSliderFill());
+        theme.SetStylebox("grabber_area_highlight", "HSlider", MakeSliderFill());
+        theme.SetColor("font_color", "Label", new Color("e8e4c8"));
+        return theme;
+    }
+
+    private static StyleBoxFlat MakeButtonStyle(Color fill, Color border, Color shadow)
+    {
+        return new StyleBoxFlat
         {
-            BgColor = new Color("183b43"),
-            BorderColor = new Color("d4bd7a"),
-            CornerRadiusTopLeft = 12,
-            CornerRadiusTopRight = 12,
-            CornerRadiusBottomLeft = 12,
-            CornerRadiusBottomRight = 12,
-            BorderWidthBottom = 2,
-            BorderWidthTop = 2,
+            BgColor = fill,
+            BorderColor = border,
             BorderWidthLeft = 2,
             BorderWidthRight = 2,
+            BorderWidthTop = 2,
+            BorderWidthBottom = 3,
+            CornerRadiusTopLeft = 0,
+            CornerRadiusTopRight = 0,
+            CornerRadiusBottomLeft = 0,
+            CornerRadiusBottomRight = 0,
+            ShadowColor = new Color(shadow, 0.95f),
+            ShadowSize = 3,
+            ShadowOffset = new Vector2(0, 3),
+            ContentMarginLeft = 12,
+            ContentMarginRight = 12,
+            ContentMarginTop = 7,
+            ContentMarginBottom = 7
+        };
+    }
+
+    private static StyleBoxFlat MakeSliderTrack()
+    {
+        return new StyleBoxFlat
+        {
+            BgColor = new Color("172f32"),
+            BorderColor = new Color("c5a96a"),
+            BorderWidthLeft = 2,
+            BorderWidthRight = 2,
+            BorderWidthTop = 2,
+            BorderWidthBottom = 2,
+            CornerRadiusTopLeft = 0,
+            CornerRadiusTopRight = 0,
+            CornerRadiusBottomLeft = 0,
+            CornerRadiusBottomRight = 0,
+            ContentMarginTop = 3,
+            ContentMarginBottom = 3
+        };
+    }
+
+    private static StyleBoxFlat MakeSliderFill()
+    {
+        return new StyleBoxFlat
+        {
+            BgColor = new Color("e5bd69"),
+            CornerRadiusTopLeft = 0,
+            CornerRadiusTopRight = 0,
+            CornerRadiusBottomLeft = 0,
+            CornerRadiusBottomRight = 0
+        };
+    }
+
+    private static StyleBoxFlat MakePanelStyle()
+    {
+        return new StyleBoxFlat
+        {
+            BgColor = new Color("183b43"),
+            BorderColor = new Color("e3c477"),
+            CornerRadiusTopLeft = 0,
+            CornerRadiusTopRight = 0,
+            CornerRadiusBottomLeft = 0,
+            CornerRadiusBottomRight = 0,
+            BorderWidthBottom = 4,
+            BorderWidthTop = 4,
+            BorderWidthLeft = 4,
+            BorderWidthRight = 4,
+            ShadowColor = new Color("10252b", 0.95f),
+            ShadowSize = 6,
+            ShadowOffset = new Vector2(0, 5),
             ContentMarginLeft = 18,
             ContentMarginRight = 18,
-            ContentMarginTop = 14,
-            ContentMarginBottom = 14
+            ContentMarginTop = 16,
+            ContentMarginBottom = 16
         };
-        return style;
     }
 
     private void ApplyAudio()
