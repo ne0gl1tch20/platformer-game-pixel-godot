@@ -31,6 +31,10 @@ Landscape-first platform layout with a virtual analog joystick, jump, attack and
 - Walker enemies, combat, health, collectibles and respawning.
 - Loveglow ambient soundtrack and jump/attack/collect sounds synthesized as PCM at runtime with C# DSP.
 
+## Pixel UI assets
+
+- Menu headings and controls use **Press Start 2P** by Cody “CodeMan38” Boisclair, distributed under the SIL Open Font License 1.1. The full license is included at `assets/fonts/OFL-Press-Start-2P.txt`.
+
 ## Kotlin bridge
 
 `android/platformer_bridge/` contains the Kotlin Android plugin. The C# wrapper safely exposes vibration and toast support when the plugin is available.

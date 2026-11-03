@@ -164,14 +164,50 @@ public partial class Game : Node2D
     {
         var layer = new CanvasLayer { Name = "HUD" };
         AddChild(layer);
-        _status = new Label { Text = "LOADING...", Position = new Vector2(8, 7) };
+
+        var frame = new PanelContainer
+        {
+            Name = "PixelHudFrame",
+            Position = new Vector2(8, 8),
+            CustomMinimumSize = new Vector2(206, 43),
+            MouseFilter = Control.MouseFilterEnum.Ignore
+        };
+        var frameStyle = new StyleBoxFlat
+        {
+            BgColor = new Color("142f35", 0.94f),
+            BorderColor = new Color("e2bd70"),
+            BorderWidthLeft = 2,
+            BorderWidthRight = 2,
+            BorderWidthTop = 2,
+            BorderWidthBottom = 3,
+            CornerRadiusTopLeft = 0,
+            CornerRadiusTopRight = 0,
+            CornerRadiusBottomLeft = 0,
+            CornerRadiusBottomRight = 0,
+            ShadowColor = new Color("102127", 0.85f),
+            ShadowSize = 3,
+            ShadowOffset = new Vector2(0, 3),
+            ContentMarginLeft = 8,
+            ContentMarginRight = 8,
+            ContentMarginTop = 4,
+            ContentMarginBottom = 4
+        };
+        frame.AddThemeStyleboxOverride("panel", frameStyle);
+        layer.AddChild(frame);
+
+        var rows = new VBoxContainer { MouseFilter = Control.MouseFilterEnum.Ignore };
+        rows.AddThemeConstantOverride("separation", 1);
+        frame.AddChild(rows);
+
+        _status = new Label { Text = "HP  ♥ ♥ ♥ ♥ ♥" };
         _status.AddThemeFontSizeOverride("font_size", 10);
-        _status.AddThemeColorOverride("font_color", new Color("26394b"));
-        layer.AddChild(_status);
-        _score = new Label { Position = new Vector2(8, 22) };
-        _score.AddThemeFontSizeOverride("font_size", 10);
-        _score.AddThemeColorOverride("font_color", new Color("26394b"));
-        layer.AddChild(_score);
+        _status.AddThemeColorOverride("font_color", new Color("ffe3a0"));
+        rows.AddChild(_status);
+
+        _score = new Label { Text = "CRYSTALS  ◆ 0" };
+        _score.AddThemeFontSizeOverride("font_size", 9);
+        _score.AddThemeColorOverride("font_color", new Color("b8e5c0"));
+        rows.AddChild(_score);
     }
 
     private void BuildGameShell()
