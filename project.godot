@@ -38,6 +38,10 @@ project/assembly_name="Platformer Game Pixel"
 
 3d/physics_engine="Jolt Physics"
 
+[gui]
+
+common/snap_controls_to_pixels=true
+
 [rendering]
 
 textures/canvas_textures/default_texture_filter=0
