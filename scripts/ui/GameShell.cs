@@ -100,6 +100,7 @@ public partial class GameShell : CanvasLayer
         AddText("Game & code: Platformer Game Pixel");
         AddText("Music & sound: Loveglow DSP");
         AddText("Engine: Godot Engine");
+        AddText("UI font: Press Start 2P (SIL Open Font License 1.1)");
         AddText("Third-party asset credits are listed in the repository README.");
         AddActionButton("BACK", ShowMainMenu);
         AddFooter();
