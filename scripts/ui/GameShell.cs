@@ -221,7 +221,7 @@ public partial class GameShell : CanvasLayer
         jump.Pressed += () => JumpRequested?.Invoke();
         var attack = MakeTouchButton(controls, "ATK", new Vector2(1, 1), new Vector2(-202, -74), new Vector2(-128, -24), new Vector2(74, 50));
         attack.Pressed += () => AttackRequested?.Invoke();
-        var pause = MakeTouchButton(controls, "Ⅱ", new Vector2(1, 0), new Vector2(-58, 12), new Vector2(-14, 50), new Vector2(44, 38));
+        var pause = MakeTouchButton(controls, "||", new Vector2(1, 0), new Vector2(-58, 12), new Vector2(-14, 50), new Vector2(44, 38));
         pause.Pressed += () => PauseRequested?.Invoke();
     }
 
@@ -289,11 +289,11 @@ public partial class GameShell : CanvasLayer
             SizeFlagsHorizontal = Control.SizeFlags.ShrinkCenter,
             MouseFilter = Control.MouseFilterEnum.Ignore
         };
-        _content.AddChild(divider);
         heading.AddThemeColorOverride("font_shadow_color", new Color("101f28"));
         heading.AddThemeConstantOverride("shadow_offset_x", 2);
         heading.AddThemeConstantOverride("shadow_offset_y", 2);
         _content.AddChild(heading);
+        _content.AddChild(divider);
         var caption = new Label { Text = subtitle, HorizontalAlignment = HorizontalAlignment.Center, AutowrapMode = TextServer.AutowrapMode.WordSmart };
         caption.AddThemeFontSizeOverride("font_size", 12);
         caption.AddThemeColorOverride("font_color", new Color("c4d7cf"));
