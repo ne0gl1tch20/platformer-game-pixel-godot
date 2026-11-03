@@ -4,17 +4,17 @@ public partial class SaveSystem : Node
 {
 	public static SaveSystem Instance { get; private set; }
 
-    private const string SavePath = "user://save.json";
-    public int BestScore { get; private set; }
-    public int Coins { get; private set; }
-    public int CheckpointX { get; private set; } = 64;
-    public int CheckpointY { get; private set; } = 220;
+	private const string SavePath = "user://save.json";
+	public int BestScore { get; private set; }
+	public int Coins { get; private set; }
+	public int CheckpointX { get; private set; } = 64;
+	public int CheckpointY { get; private set; } = 220;
 
-    public override void _Ready()
-    {
-        Instance = this;
-        Load();
-    }
+	public override void _Ready()
+	{
+		Instance = this;
+		Load();
+	}
 
 	public void AddCoins(int amount)
 	{
@@ -30,14 +30,14 @@ public partial class SaveSystem : Node
 		Save();
 	}
 
-    public void SetCheckpoint(Vector2 position)
-    {
-        CheckpointX = Mathf.RoundToInt(position.X);
-        CheckpointY = Mathf.RoundToInt(position.Y);
-        Save();
-    }
+	public void SetCheckpoint(Vector2 position)
+	{
+		CheckpointX = Mathf.RoundToInt(position.X);
+		CheckpointY = Mathf.RoundToInt(position.Y);
+		Save();
+	}
 
-    public Vector2 GetCheckpoint() => new(CheckpointX, CheckpointY);
+	public Vector2 GetCheckpoint() => new(CheckpointX, CheckpointY);
 
 	/// <summary>Returns a short UI-friendly description of a save slot.</summary>
 	public string GetSlotSummary(int slot)
@@ -55,53 +55,53 @@ public partial class SaveSystem : Node
 		return $"CRYSTALS {coins}  •  BEST {best}";
 	}
 
-    /// <summary>Changes the active save slot and loads its progress.</summary>
-    public void SelectSlot(int slot)
-    {
-        if (!IsValidSlot(slot))
-        {
-            GD.PushWarning($"[Save] Ignoring invalid slot selection: {slot}");
-            return;
-        }
+	/// <summary>Changes the active save slot and loads its progress.</summary>
+	public void SelectSlot(int slot)
+	{
+		if (!IsValidSlot(slot))
+		{
+			GD.PushWarning($"[Save] Ignoring invalid slot selection: {slot}");
+			return;
+		}
 
-        if (_currentSlot == slot) return;
-        Save();
-        _currentSlot = slot;
-        LoadSlot(slot);
-    }
+		if (_currentSlot == slot) return;
+		Save();
+		_currentSlot = slot;
+		LoadSlot(slot);
+	}
 
-    /// <summary>Deletes a slot. Deleting the active slot resets it to a fresh save.</summary>
-    public void DeleteSlot(int slot)
-    {
-        if (!IsValidSlot(slot))
-        {
-            GD.PushWarning($"[Save] Ignoring invalid slot deletion: {slot}");
-            return;
-        }
+	/// <summary>Deletes a slot. Deleting the active slot resets it to a fresh save.</summary>
+	public void DeleteSlot(int slot)
+	{
+		if (!IsValidSlot(slot))
+		{
+			GD.PushWarning($"[Save] Ignoring invalid slot deletion: {slot}");
+			return;
+		}
 
-        var path = GetSlotPath(slot);
-        if (FileAccess.FileExists(path))
-        {
-            var error = DirAccess.RemoveAbsolute(ProjectSettings.GlobalizePath(path));
-            if (error != Error.Ok)
-            {
-                GD.PushWarning($"[Save] Could not delete slot {slot}: {error}");
-                return;
-            }
-        }
+		var path = GetSlotPath(slot);
+		if (FileAccess.FileExists(path))
+		{
+			var error = DirAccess.RemoveAbsolute(ProjectSettings.GlobalizePath(path));
+			if (error != Error.Ok)
+			{
+				GD.PushWarning($"[Save] Could not delete slot {slot}: {error}");
+				return;
+			}
+		}
 
-        if (_currentSlot == slot)
-        {
-            ResetProgress();
-        }
-    }
+		if (_currentSlot == slot)
+		{
+			ResetProgress();
+		}
+	}
 
-    /// <summary>Starts a fresh adventure in the currently selected slot.</summary>
-    public void NewGame()
-    {
-        ResetProgress();
-        Save();
-    }
+	/// <summary>Starts a fresh adventure in the currently selected slot.</summary>
+	public void NewGame()
+	{
+		ResetProgress();
+		Save();
+	}
 
 	public void Save()
 	{
@@ -122,24 +122,24 @@ public partial class SaveSystem : Node
 			["checkpoint_y"] = CheckpointY
 		};
 
-        file.StoreString(Json.Stringify(data));
-    }
+		file.StoreString(Json.Stringify(data));
+	}
 
-    private void Load()
-    {
-        if (!FileAccess.FileExists(SavePath)) return;
-        using var file = FileAccess.Open(SavePath, FileAccess.ModeFlags.Read);
-        if (file == null) return;
+	private void Load()
+	{
+		if (!FileAccess.FileExists(SavePath)) return;
+		using var file = FileAccess.Open(SavePath, FileAccess.ModeFlags.Read);
+		if (file == null) return;
 
-        var parsed = Json.ParseString(file.GetAsText());
-        if (parsed.VariantType != Variant.Type.Dictionary) return;
-        var data = parsed.AsGodotDictionary();
+		var parsed = Json.ParseString(file.GetAsText());
+		if (parsed.VariantType != Variant.Type.Dictionary) return;
+		var data = parsed.AsGodotDictionary();
 
-        BestScore = GetInt(data, "best_score", 0);
-        Coins = GetInt(data, "coins", 0);
-        CheckpointX = GetInt(data, "checkpoint_x", 64);
-        CheckpointY = GetInt(data, "checkpoint_y", 220);
-    }
+		BestScore = GetInt(data, "best_score", 0);
+		Coins = GetInt(data, "coins", 0);
+		CheckpointX = GetInt(data, "checkpoint_x", 64);
+		CheckpointY = GetInt(data, "checkpoint_y", 220);
+	}
 
 	private static Godot.Collections.Dictionary ReadSaveData(string path)
 	{
@@ -151,28 +151,28 @@ public partial class SaveSystem : Node
 		return parsed.AsGodotDictionary();
 	}
 
-    private void ResetProgress()
-    {
-        BestScore = 0;
-        Coins = 0;
-        CheckpointX = 64;
-        CheckpointY = 220;
-    }
+	private void ResetProgress()
+	{
+		BestScore = 0;
+		Coins = 0;
+		CheckpointX = 64;
+		CheckpointY = 220;
+	}
 
-    private string GetSlotPath(int slot) => $"user://save_slot_{slot}.json";
+	private string GetSlotPath(int slot) => $"user://save_slot_{slot}.json";
 
-    private static bool IsValidSlot(int slot) => slot >= 1 && slot <= SlotCount;
+	private static bool IsValidSlot(int slot) => slot >= 1 && slot <= SlotCount;
 
 	private static int GetInt(Godot.Collections.Dictionary data, string key, int fallback)
 	{
 		if (!data.ContainsKey(key)) return fallback;
 
-        var value = data[key];
-        return value.VariantType switch
-        {
-            Variant.Type.Int => (int)value,
-            Variant.Type.Float => Mathf.RoundToInt((float)value),
-            _ => fallback
-        };
-    }
+		var value = data[key];
+		return value.VariantType switch
+		{
+			Variant.Type.Int => (int)value,
+			Variant.Type.Float => Mathf.RoundToInt((float)value),
+			_ => fallback
+		};
+	}
 }
