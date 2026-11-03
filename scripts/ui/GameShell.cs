@@ -209,6 +209,7 @@ public partial class GameShell : CanvasLayer
     {
         var controls = new Control { Name = "TouchControls", MouseFilter = Control.MouseFilterEnum.Pass };
         controls.SetAnchorsAndOffsetsPreset(Control.LayoutPreset.FullRect);
+        controls.Visible = _showTouch;
         _root.AddChild(controls);
 
         var joystick = new VirtualJoystick { Name = "MoveJoystick", AnchorLeft = 0, AnchorTop = 1, AnchorRight = 0, AnchorBottom = 1, OffsetLeft = 22, OffsetTop = -158, OffsetRight = 154, OffsetBottom = -26 };
